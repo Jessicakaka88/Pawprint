@@ -1,4 +1,13 @@
-/* Static catalog of cats and the streak milestones that unlock them. */
+/* Static catalog of cats, accessories, and the streak milestones that unlock them. */
+
+const ACCESSORIES = {
+  bandana: { name: "Red Bandana", glyph: "🧣", slot: "neck" },
+  bowtie: { name: "Blue Bowtie", glyph: "🎀", slot: "neck" },
+  party_hat: { name: "Party Hat", glyph: "🎉", slot: "head" },
+  bell_collar: { name: "Bell Collar", glyph: "🔔", slot: "neck" },
+  flower_crown: { name: "Flower Crown", glyph: "🌸", slot: "head" },
+  scarf: { name: "Cozy Scarf", glyph: "🧶", slot: "neck" },
+};
 
 const CAT_CATALOG = [
   { id: "mochi", name: "Mochi", palette: "mochi", unlockDays: 0, blurb: "Your very first desk pet. Loves sunny windowsills." },
@@ -22,6 +31,6 @@ const MILESTONES = [
     days: c.unlockDays, label: `Unlock ${c.name} the cat`, kind: "cat", refId: c.id,
   })),
   ...ACCESSORY_MILESTONES.map(a => ({
-    days: a.unlockDays, label: `Unlock ${PIXELART.ACCESSORIES[a.id].name}`, kind: "accessory", refId: a.id,
+    days: a.unlockDays, label: `Unlock ${ACCESSORIES[a.id].name}`, kind: "accessory", refId: a.id,
   })),
 ].sort((a, b) => a.days - b.days);

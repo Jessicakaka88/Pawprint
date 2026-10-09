@@ -1,0 +1,47 @@
+{
+  "sit_front": {
+    "w": 177,
+    "h": 189,
+    "frames": [
+      "sit_front"
+    ]
+  },
+  "sit_left": {
+    "w": 177,
+    "h": 189,
+    "frames": [
+      "sit_left"
+    ]
+  },
+  "sit_right": {
+    "w": 176,
+    "h": 190,
+    "frames": [
+      "sit_right"
+    ]
+  },
+  "walk_left": {
+    "w": 219,
+    "h": 155,
+    "frames": [
+      "walk_left_1",
+      "walk_left_2",
+      "walk_left_3",
+      "walk_left_4",
+      "walk_left_5",
+      "walk_left_6"
+    ]
+  },
+  "walk_right": {
+    "w": 206,
+    "h": 153,
+    "frames": [
+      "walk_right_1",
+      "walk_right_2",
+      "walk_right_3",
+      "walk_right_4",
+      "walk_right_5",
+      "walk_right_6"
+    ]
+  }
+}

@@ -47,7 +47,7 @@ const UI = (() => {
       const card = document.createElement("div");
       card.className = "cat-card" + (unlocked ? "" : " locked");
       card.innerHTML = `
-        <div class="cat-card-thumb">${unlocked ? "🐱" : "🔒"}</div>
+        <div class="cat-card-thumb">${unlocked ? `<img src="assets/cats/${cat.palette}/sit_front.png" alt="">` : "🔒"}</div>
         <div class="cat-card-info">
           <div class="cat-card-name">${cat.name}</div>
           <div class="cat-card-sub">${unlocked ? cat.blurb : `Reach a ${cat.unlockDays}-day streak to unlock`}</div>
@@ -83,7 +83,7 @@ const UI = (() => {
     const grid = document.getElementById("closet-grid");
     grid.innerHTML = "";
     const equippedList = state.equipped[closetSelectedCat] || [];
-    Object.entries(PIXELART.ACCESSORIES).forEach(([id, acc]) => {
+    Object.entries(ACCESSORIES).forEach(([id, acc]) => {
       const unlocked = state.unlockedAccessories.includes(id);
       const equipped = equippedList.includes(id);
       const milestone = ACCESSORY_MILESTONES.find((m) => m.id === id);

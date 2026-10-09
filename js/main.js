@@ -61,7 +61,7 @@
 
     window.addEventListener("resize", () => {
       Object.values(cats).forEach((cat) => {
-        cat.y = Math.min(cat.y, cat.floorY());
+        cat.footY = Math.min(cat.footY, cat.groundFootY());
       });
     });
   }

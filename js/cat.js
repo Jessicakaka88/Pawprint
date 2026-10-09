@@ -1,6 +1,7 @@
 /*
  * Cat — a single desk pet: its DOM element, wander/perch AI, drag & pat
- * interaction, paw-print trail, and particle effects.
+ * interaction, paw-print trail, and particle effects. Visuals come from
+ * the hand-drawn sprite sheet in js/spriteart.js.
  */
 
 const CatMouse = { x: -9999, y: -9999 };
@@ -37,46 +38,44 @@ function playPurr() {
 class Cat {
   constructor(def, world) {
     this.def = def;           // {id, name, palette}
-    this.world = world;       // callbacks: onPat(result), getSettings(), getEquipped(id)
-    this.facing = 1;
-    this.x = 120 + Math.random() * 300;
-    this.y = this.floorY();
+    this.world = world;       // callbacks: onPat(result), getSettings(), getEquipped(id), getWindowRects()
+    this.facing = 1;          // 1 = right, -1 = left
+    this.x = 140 + Math.random() * 300;      // center x
+    this.footY = this.groundFootY();          // baseline (feet) y
     this.state = "idle";
     this.queue = [];
     this.currentStep = null;
     this.stepStart = 0;
-    this.stepFromX = this.x; this.stepFromY = this.y;
+    this.stepFromX = this.x; this.stepFromFootY = this.footY;
     this.patUntil = 0;
-    this.lookX = 0; this.lookY = 0;
     this.dragSwing = 0;
     this.dragging = false;
     this.pawStampX = this.x;
-    this.blinkSeed = Math.random() * 10;
-    this.sleepy = false;
+    this.pawSide = 1;
+    this.accessoryEls = {};
 
     this._buildDom();
     this._wireInput();
   }
 
-  floorY() {
-    return window.innerHeight - 96 - PIXELART.CANVAS_H;
+  groundFootY() {
+    return window.innerHeight - 92;
   }
 
   _buildDom() {
     const el = document.createElement("div");
     el.className = "cat";
-    el.style.width = PIXELART.CANVAS_W + "px";
-    el.style.height = PIXELART.CANVAS_H + "px";
-    const { canvas, ctx } = PIXELART.makeCanvas();
-    el.appendChild(canvas);
+    const img = document.createElement("img");
+    img.className = "cat-sprite";
+    img.draggable = false;
+    el.appendChild(img);
     const tag = document.createElement("div");
     tag.className = "cat-name-tag";
     tag.textContent = this.def.name;
     el.appendChild(tag);
     document.getElementById("cats-layer").appendChild(el);
     this.el = el;
-    this.canvas = canvas;
-    this.ctx = ctx;
+    this.img = img;
   }
 
   _wireInput() {
@@ -86,7 +85,7 @@ class Cat {
       downX = e.clientX; downY = e.clientY; downT = performance.now();
       movedFar = false;
       pointerOffsetX = e.clientX - this.x;
-      pointerOffsetY = e.clientY - this.y;
+      pointerOffsetY = e.clientY - this.footY;
       this.el.setPointerCapture(e.pointerId);
     });
     this.el.addEventListener("pointermove", (e) => {
@@ -99,12 +98,12 @@ class Cat {
       if (movedFar) {
         const prevX = this.x;
         this.x = e.clientX - pointerOffsetX;
-        this.y = e.clientY - pointerOffsetY;
+        this.footY = e.clientY - pointerOffsetY;
         this.dragSwing = Math.max(-1, Math.min(1, (this.x - prevX) / 8));
-        this.facing = (e.movementX || 0) >= 0 ? 1 : -1;
+        if (Math.abs(e.movementX || 0) > 0.5) this.facing = (e.movementX || 0) >= 0 ? 1 : -1;
       }
     });
-    const finish = (e) => {
+    const finish = () => {
       if (downX == null) return;
       const elapsed = performance.now() - downT;
       if (!movedFar && elapsed < 350) {
@@ -129,24 +128,22 @@ class Cat {
   _endDrag() {
     this.dragging = false;
     this.el.classList.remove("dragging");
-    // Land on whichever surface (a window top, or the floor) is under the cat now.
-    const landing = this._surfaceBelow(this.x + PIXELART.CANVAS_W / 2, this.y + PIXELART.CANVAS_H);
-    this.y = landing;
-    this.x = Math.max(4, Math.min(window.innerWidth - PIXELART.CANVAS_W - 4, this.x));
+    this.footY = this._surfaceBelow(this.x, this.footY);
+    const { w } = SPRITEART.sitSize();
+    this.x = Math.max(w / 2, Math.min(window.innerWidth - w / 2, this.x));
     this.state = "idle";
     this.stepStart = performance.now();
     this.currentStep = { type: "idle", ms: 400 };
   }
 
-  _surfaceBelow(centerX, feetY) {
+  _surfaceBelow(centerX, footY) {
     const rects = this.world.getWindowRects();
     for (const r of rects) {
       if (centerX > r.left + 6 && centerX < r.left + r.width - 6) {
-        const topY = r.top - PIXELART.CANVAS_H + 18;
-        if (feetY > r.top - 40 && feetY < r.top + r.height) return topY;
+        if (footY > r.top - 40 && footY < r.top + r.height) return r.top + 6;
       }
     }
-    return this.floorY();
+    return this.groundFootY();
   }
 
   pat() {
@@ -157,31 +154,29 @@ class Cat {
     this.currentStep = null;
     this._spawnHearts();
     if (this.world.getSettings().sound) playPurr();
-    const result = this.world.onPat(this.def.id);
-    if (result && result.milestonesHit && result.milestonesHit.length) {
-      // handled by UI via onPat callback
-    }
+    this.world.onPat(this.def.id);
   }
 
   _spawnHearts() {
+    const { w, h } = SPRITEART.sitSize();
     const count = 3;
     for (let i = 0; i < count; i++) {
-      const h = document.createElement("div");
-      h.className = "heart-particle";
-      h.textContent = Math.random() > 0.5 ? "💗" : "💕";
-      h.style.left = (this.x + PIXELART.CANVAS_W * 0.55 + (Math.random() * 20 - 10)) + "px";
-      h.style.top = (this.y + 4) + "px";
-      h.style.animationDelay = (i * 120) + "ms";
-      document.getElementById("cats-layer").appendChild(h);
-      setTimeout(() => h.remove(), 1400 + i * 120);
+      const el = document.createElement("div");
+      el.className = "heart-particle";
+      el.textContent = Math.random() > 0.5 ? "💗" : "💕";
+      el.style.left = (this.x + w * 0.22 + (Math.random() * 20 - 10)) + "px";
+      el.style.top = (this.footY - h + 6) + "px";
+      el.style.animationDelay = (i * 120) + "ms";
+      document.getElementById("cats-layer").appendChild(el);
+      setTimeout(() => el.remove(), 1400 + i * 120);
     }
     if (this.def.palette === "celestial") {
       for (let i = 0; i < 4; i++) {
         const s = document.createElement("div");
         s.className = "sparkle-particle";
         s.textContent = "✨";
-        s.style.left = (this.x + Math.random() * PIXELART.CANVAS_W) + "px";
-        s.style.top = (this.y + Math.random() * PIXELART.CANVAS_H) + "px";
+        s.style.left = (this.x - w / 2 + Math.random() * w) + "px";
+        s.style.top = (this.footY - h + Math.random() * h) + "px";
         s.style.animationDelay = (i * 90) + "ms";
         document.getElementById("cats-layer").appendChild(s);
         setTimeout(() => s.remove(), 1500 + i * 90);
@@ -190,27 +185,37 @@ class Cat {
   }
 
   _planNext() {
-    const floorY = this.floorY();
+    const groundY = this.groundFootY();
     const rects = this.world.getWindowRects();
     const roll = Math.random();
     if (roll < 0.22 && rects.length) {
       const r = rects[Math.floor(Math.random() * rects.length)];
-      const targetX = Math.max(10, Math.min(window.innerWidth - PIXELART.CANVAS_W - 10,
-        r.left + 16 + Math.random() * Math.max(10, r.width - 32)));
-      const perchY = r.top - PIXELART.CANVAS_H + 18;
-      this.queue.push({ type: "walk", x: targetX, y: floorY });
-      this.queue.push({ type: "hop", x: targetX, y: perchY, ms: 360 });
+      const targetX = Math.max(30, Math.min(window.innerWidth - 30,
+        r.left + 20 + Math.random() * Math.max(10, r.width - 40)));
+      const perchY = r.top + 6;
+      this.queue.push({ type: "walk", x: targetX, footY: groundY });
+      this.queue.push({ type: "hop", x: targetX, footY: perchY, ms: 360 });
       this.queue.push({ type: "sit", ms: 2600 + Math.random() * 2600 });
-      this.queue.push({ type: "hop", x: targetX, y: floorY, ms: 360 });
+      this.queue.push({ type: "hop", x: targetX, footY: groundY, ms: 360 });
       this.queue.push({ type: "idle", ms: 600 + Math.random() * 900 });
     } else if (roll < 0.85) {
-      const targetX = 30 + Math.random() * Math.max(10, window.innerWidth - 220);
-      this.queue.push({ type: "walk", x: targetX, y: floorY });
+      const targetX = 50 + Math.random() * Math.max(10, window.innerWidth - 120);
+      this.queue.push({ type: "walk", x: targetX, footY: groundY });
       this.queue.push({ type: "idle", ms: 900 + Math.random() * 2200 });
     } else {
-      this.sleepy = true;
       this.queue.push({ type: "sit", ms: 2000 + Math.random() * 2000 });
       this.queue.push({ type: "idle", ms: 400 });
+    }
+  }
+
+  _updateCursorGlance() {
+    // When idle/sitting still, turn to face the cursor if it comes close —
+    // a lightweight stand-in for live eye/ear tracking.
+    if (this.state !== "idle" && this.state !== "sit") return;
+    const headX = this.x, headY = this.footY - 60;
+    const dist = Math.hypot(CatMouse.x - headX, CatMouse.y - headY);
+    if (dist < 190 && Math.abs(CatMouse.x - headX) > 18) {
+      this.facing = CatMouse.x > headX ? 1 : -1;
     }
   }
 
@@ -219,19 +224,6 @@ class Cat {
     if (settings.hidden) { this.el.classList.add("hidden-cat"); return; }
     this.el.classList.remove("hidden-cat");
 
-    // cursor reaction (always active, independent of pause, like a passive sense)
-    const cx = this.x + PIXELART.CANVAS_W * 0.68, cy = this.y + PIXELART.CANVAS_H * 0.4;
-    const dx = CatMouse.x - cx, dy = CatMouse.y - cy;
-    const dist = Math.hypot(dx, dy);
-    const radius = 170;
-    if (dist < radius) {
-      this.lookX += ((dx / radius) - this.lookX) * 0.12;
-      this.lookY += ((dy / radius) - this.lookY) * 0.12;
-    } else {
-      this.lookX += (0 - this.lookX) * 0.06;
-      this.lookY += (0 - this.lookY) * 0.06;
-    }
-
     if (this.dragging) {
       this.dragSwing *= 0.9;
       this._render(now);
@@ -239,19 +231,20 @@ class Cat {
     }
 
     if (this.state === "patted") {
-      if (now >= this.patUntil) { this.state = "idle"; this.sleepy = false; }
+      if (now >= this.patUntil) this.state = "idle";
       this._render(now);
       return;
     }
 
     if (settings.paused) { this._render(now); return; }
 
+    this._updateCursorGlance();
+
     if (!this.currentStep) {
       if (this.queue.length === 0) this._planNext();
       this.currentStep = this.queue.shift();
       this.stepStart = now;
-      this.stepFromX = this.x; this.stepFromY = this.y;
-      this.sleepy = this.currentStep.type === "sit" && Math.random() < 0.4;
+      this.stepFromX = this.x; this.stepFromFootY = this.footY;
     }
 
     const step = this.currentStep;
@@ -263,7 +256,7 @@ class Cat {
         this.facing = dxw > 0 ? 1 : -1;
         const move = speed * (dt / 1000);
         this.x += Math.sign(dxw) * Math.min(Math.abs(dxw), move);
-        this._maybeStampPaw(now, settings);
+        this._maybeStampPaw(settings);
       } else {
         this.currentStep = null;
       }
@@ -273,9 +266,8 @@ class Cat {
       const p = Math.min(1, elapsed / step.ms);
       const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
       this.x = this.stepFromX + (step.x - this.stepFromX) * ease;
-      const bump = Math.sin(p * Math.PI) * -10;
-      this.y = this.stepFromY + (step.y - this.stepFromY) * ease + bump;
-      if (p >= 1) { this.x = step.x; this.y = step.y; this.currentStep = null; }
+      this.footY = this.stepFromFootY + (step.footY - this.stepFromFootY) * ease;
+      if (p >= 1) { this.x = step.x; this.footY = step.footY; this.currentStep = null; }
     } else if (step.type === "sit") {
       this.state = "sit";
       if (now - this.stepStart >= step.ms) this.currentStep = null;
@@ -287,14 +279,15 @@ class Cat {
     this._render(now);
   }
 
-  _maybeStampPaw(now, settings) {
+  _maybeStampPaw(settings) {
     if (!settings.trails) return;
-    if (Math.abs(this.x - this.pawStampX) < 16) return;
+    if (Math.abs(this.x - this.pawStampX) < 15) return;
     this.pawStampX = this.x;
+    this.pawSide *= -1;
     const print = document.createElement("div");
     print.className = "paw-print";
-    const footX = this.x + PIXELART.CANVAS_W * 0.32 + (Math.random() * 6 - 3);
-    const footY = this.y + PIXELART.CANVAS_H - 6 + (Math.random() * 4 - 2);
+    const footX = this.x + this.pawSide * 7 + (Math.random() * 4 - 2);
+    const footY = this.footY - 4 + (Math.random() * 4 - 2);
     print.style.left = (footX - 11) + "px";
     print.style.top = (footY - 11) + "px";
     print.style.transform = `scaleX(${this.facing})`;
@@ -304,24 +297,85 @@ class Cat {
     setTimeout(() => print.remove(), 3000);
   }
 
+  _currentFrame(now) {
+    const palette = this.def.palette;
+    if (this.state === "patted") {
+      return { name: SPRITEART.FRAME_NAMES.sitFront, anchorKey: "sit_front", ...SPRITEART.sitSize() };
+    }
+    if (this.dragging) {
+      const frames = this.facing === 1 ? SPRITEART.FRAME_NAMES.walkR : SPRITEART.FRAME_NAMES.walkL;
+      const anchorKey = this.facing === 1 ? "walk_r" : "walk_l";
+      return { name: frames[3], anchorKey, ...SPRITEART.walkSize() };
+    }
+    if (this.state === "walk") {
+      const frames = this.facing === 1 ? SPRITEART.FRAME_NAMES.walkR : SPRITEART.FRAME_NAMES.walkL;
+      const anchorKey = this.facing === 1 ? "walk_r" : "walk_l";
+      const idx = Math.floor(now / 110) % frames.length;
+      return { name: frames[idx], anchorKey, ...SPRITEART.walkSize() };
+    }
+    // idle / sit
+    const anchorKey = this.facing === 1 ? "sit_r" : "sit_l";
+    const name = this.facing === 1 ? SPRITEART.FRAME_NAMES.sitR : SPRITEART.FRAME_NAMES.sitL;
+    return { name, anchorKey, ...SPRITEART.sitSize() };
+  }
+
   _render(now) {
-    this.el.style.left = Math.round(this.x) + "px";
-    this.el.style.top = Math.round(this.y) + "px";
-    PIXELART.draw(this.ctx, {
-      palette: this.def.palette,
-      facing: this.facing,
-      pose: this.state,
-      t: now,
-      lookX: this.lookX,
-      lookY: this.lookY,
-      dragSwing: this.dragSwing,
-      sleepy: this.sleepy,
-      blinkSeed: this.blinkSeed,
-      accessories: this.world.getEquipped(this.def.id),
+    const palette = this.def.palette;
+    const frame = this._currentFrame(now);
+    const src = SPRITEART.img(palette, frame.name).src;
+    if (this.img.src !== src) this.img.src = src;
+    this.img.style.width = frame.w + "px";
+    this.img.style.height = frame.h + "px";
+
+    const left = this.x - frame.w / 2;
+    const top = this.footY - frame.h;
+    this.el.style.left = Math.round(left) + "px";
+    this.el.style.top = Math.round(top) + "px";
+    this.el.style.width = frame.w + "px";
+    this.el.style.height = frame.h + "px";
+
+    if (this.dragging) {
+      const tilt = (this.dragSwing || 0) * 12;
+      const skew = (this.dragSwing || 0) * -6;
+      this.img.style.transform = `rotate(${tilt}deg) skewX(${skew}deg) scaleY(1.14)`;
+      this.img.style.transformOrigin = "50% 15%";
+    } else {
+      this.img.style.transform = "";
+    }
+
+    this._renderAccessories(frame);
+  }
+
+  _renderAccessories(frame) {
+    const equipped = this.world.getEquipped(this.def.id) || [];
+    const anchors = SPRITEART.ANCHORS[frame.anchorKey] || SPRITEART.ANCHORS.sit_front;
+
+    Object.keys(this.accessoryEls).forEach((id) => {
+      if (!equipped.includes(id)) {
+        this.accessoryEls[id].remove();
+        delete this.accessoryEls[id];
+      }
+    });
+
+    equipped.forEach((id) => {
+      const acc = ACCESSORIES[id];
+      if (!acc) return;
+      let el = this.accessoryEls[id];
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "accessory-badge";
+        el.textContent = acc.glyph;
+        this.el.appendChild(el);
+        this.accessoryEls[id] = el;
+      }
+      const anchor = anchors[acc.slot] || anchors.neck;
+      el.style.left = (frame.w * anchor.x) + "px";
+      el.style.top = (frame.h * anchor.y) + "px";
     });
   }
 
   destroy() {
+    Object.values(this.accessoryEls).forEach((el) => el.remove());
     this.el.remove();
   }
 }

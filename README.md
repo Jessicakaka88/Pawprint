@@ -65,12 +65,19 @@ Opening `index.html` directly via `file://` also works.
 
 Vanilla HTML/CSS/JS, no dependencies or build step:
 
-- `js/pixelart.js` — procedural pixel-art cat renderer. Cats are drawn at a
-  tiny internal resolution onto a `<canvas>` (image smoothing off) and
-  scaled up via CSS for the chunky pixel look, with every pose (walk, sit,
-  patted, dragged) driven by continuous parameters rather than hand-drawn
-  sprite sheets, so poses blend and react to live input (cursor look,
-  drag velocity).
+- `assets/cats/` — hand-drawn pixel-art cat sprites (walking loop, sitting,
+  and front-facing poses), derived from a single reference sheet and
+  recolored per cat into four palettes (`shadow`, `mochi`, `snowy`,
+  `celestial`) by remapping its fur/eye colors with a small Python script.
+- `js/spriteart.js` — preloads every sprite frame and exposes frame
+  dimensions and rough accessory anchor points (head/neck) per pose.
+- `js/cat.js` — a `Cat`'s behavior: wander/perch state machine, pointer
+  handling (tap-to-pat vs. drag, with a movement/time threshold to tell
+  them apart), frame selection (walk-cycle animation, sit, patted, a
+  tilted/stretched walk frame standing in for "dragged"), paw-print
+  stamping, heart/sparkle particles, and a tiny synthesized purr via the
+  Web Audio API. Cursor reaction is approximated by having an idle/sitting
+  cat turn to face the cursor when it comes close.
 - `js/cat.js` — a `Cat`'s behavior: wander/perch state machine, pointer
   handling (tap-to-pat vs. drag, with a movement/time threshold to tell
   them apart), paw-print stamping, heart/sparkle particles, and a tiny

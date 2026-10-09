@@ -1,0 +1,161 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Pawprint — Desk Pet Cats (Prototype)</title>
+<link rel="stylesheet" href="css/style.css" />
+</head>
+<body>
+
+  <div id="desktop">
+
+    <!-- Fake macOS menu bar -->
+    <div id="menubar">
+      <div class="menubar-left">
+        <span class="menubar-apple"></span>
+        <span class="menubar-item menubar-bold">Pawprint</span>
+        <span class="menubar-item">File</span>
+        <span class="menubar-item">Edit</span>
+        <span class="menubar-item">View</span>
+        <span class="menubar-item">Window</span>
+        <span class="menubar-item">Help</span>
+      </div>
+      <div class="menubar-right">
+        <span class="menubar-icon" title="Pawprint is running">🐾</span>
+        <span id="menubar-clock"></span>
+      </div>
+    </div>
+
+    <!-- Desktop icons (decorative, grounds the "this lives on your desktop" feel) -->
+    <div class="desktop-icons">
+      <div class="desktop-icon"><div class="di-glyph">🗂️</div><span>Projects</span></div>
+      <div class="desktop-icon"><div class="di-glyph">🖼️</div><span>Screenshots</span></div>
+    </div>
+
+    <!-- Layer where draggable fake app windows live -->
+    <div id="windows-layer"></div>
+
+    <!-- Ground-level layer for fading paw prints -->
+    <div id="trails-layer"></div>
+
+    <!-- Layer where cats + their particles live (always above windows, like a real desk-pet overlay) -->
+    <div id="cats-layer"></div>
+
+    <!-- Dock -->
+    <div id="dock">
+      <div class="dock-icon" data-app="finder" title="Finder">🗂️</div>
+      <div class="dock-icon" data-app="notes" title="Notes">📝</div>
+      <div class="dock-icon" data-app="safari" title="Safari">🧭</div>
+      <div class="dock-divider"></div>
+      <div class="dock-icon dock-icon-paw" id="dock-pawprint" title="Pawprint">🐾</div>
+    </div>
+
+    <!-- Toast notifications -->
+    <div id="toast-stack"></div>
+
+  </div>
+
+  <!-- Control panel (the "app UI") -->
+  <aside id="panel" aria-hidden="true">
+    <header class="panel-header">
+      <div class="panel-title"><span class="panel-title-paw">🐾</span> Pawprint</div>
+      <button id="panel-close" title="Close">✕</button>
+    </header>
+
+    <nav class="panel-tabs">
+      <button class="panel-tab active" data-tab="cats">Cats</button>
+      <button class="panel-tab" data-tab="closet">Closet</button>
+      <button class="panel-tab" data-tab="streak">Streak</button>
+      <button class="panel-tab" data-tab="settings">Settings</button>
+    </nav>
+
+    <section class="panel-body">
+
+      <div class="panel-page" data-page="cats">
+        <p class="panel-hint">Tap a cat to show or hide it on your desktop. Locked cats unlock at streak milestones.</p>
+        <div id="cat-roster" class="cat-roster"></div>
+      </div>
+
+      <div class="panel-page" data-page="closet" hidden>
+        <p class="panel-hint">Accessories you've earned. Equip them on any cat you own.</p>
+        <div id="closet-cat-picker" class="closet-cat-picker"></div>
+        <div id="closet-grid" class="closet-grid"></div>
+      </div>
+
+      <div class="panel-page" data-page="streak" hidden>
+        <div class="streak-hero">
+          <div class="streak-flame" id="streak-flame">🔥</div>
+          <div class="streak-count" id="streak-count">0</div>
+          <div class="streak-label">day streak</div>
+        </div>
+        <p class="panel-hint" id="streak-status">Pat a cat today to start your streak.</p>
+        <div class="milestone-list" id="milestone-list"></div>
+        <div class="debug-box">
+          <div class="debug-title">Prototype demo tools</div>
+          <p class="panel-hint small">Streaks normally advance once per real day. Use these to preview the reward loop quickly.</p>
+          <div class="debug-actions">
+            <button id="debug-next-day">⏭ Simulate next day</button>
+            <button id="debug-miss-day">💤 Simulate missed day</button>
+            <button id="debug-reset">↺ Reset progress</button>
+          </div>
+        </div>
+      </div>
+
+      <div class="panel-page" data-page="settings" hidden>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Show cats on desktop</div>
+            <div class="setting-sub">Hide every cat without losing your progress.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-hide" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Pause movement &amp; interactions</div>
+            <div class="setting-sub">Cats freeze in place and stop reacting to you.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-pause" />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Purring sound</div>
+            <div class="setting-sub">Tiny synthesized purr when you pat a cat.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-sound" checked />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+        <div class="setting-row">
+          <div>
+            <div class="setting-title">Paw prints</div>
+            <div class="setting-sub">Leave fading paw prints while walking.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-trails" checked />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+      </div>
+
+    </section>
+  </aside>
+
+  <button id="panel-opener" title="Open Pawprint controls">🐾</button>
+
+  <script src="js/pixelart.js"></script>
+  <script src="js/catdata.js"></script>
+  <script src="js/streak.js"></script>
+  <script src="js/windows.js"></script>
+  <script src="js/cat.js"></script>
+  <script src="js/ui.js"></script>
+  <script src="js/main.js"></script>
+</body>
+</html>

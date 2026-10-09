@@ -295,8 +295,8 @@ class Cat {
     print.className = "paw-print";
     const footX = this.x + PIXELART.CANVAS_W * 0.32 + (Math.random() * 6 - 3);
     const footY = this.y + PIXELART.CANVAS_H - 6 + (Math.random() * 4 - 2);
-    print.style.left = footX + "px";
-    print.style.top = footY + "px";
+    print.style.left = (footX - 11) + "px";
+    print.style.top = (footY - 11) + "px";
     print.style.transform = `scaleX(${this.facing})`;
     print.innerHTML = `<svg viewBox="0 0 24 24"><path fill="#3a2a1f" d="M12 14c-3 0-5.5 2.1-5.5 4.6 0 1.7 1.6 2.9 3.4 2.9 1 0 1.8-.4 2.1-.4.3 0 1.1.4 2.1.4 1.8 0 3.4-1.2 3.4-2.9C17.5 16.1 15 14 12 14z"/><circle cx="7.2" cy="10.5" r="1.7"/><circle cx="10.6" cy="7.8" r="1.7"/><circle cx="13.4" cy="7.8" r="1.7"/><circle cx="16.8" cy="10.5" r="1.7"/></svg>`;
     document.getElementById("trails-layer").appendChild(print);

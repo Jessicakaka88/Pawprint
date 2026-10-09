@@ -129,8 +129,8 @@ html, body {
 #trails-layer { position: absolute; inset: 0; z-index: 20; pointer-events: none; }
 .paw-print {
   position: absolute;
-  width: 10px;
-  height: 10px;
+  width: 22px;
+  height: 22px;
   opacity: 0.38;
   pointer-events: none;
   transition: opacity 2.6s ease-out;

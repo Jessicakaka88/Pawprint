@@ -193,10 +193,15 @@ class Cat {
       const targetX = Math.max(30, Math.min(window.innerWidth - 30,
         r.left + 20 + Math.random() * Math.max(10, r.width - 40)));
       const perchY = r.top + 6;
-      this.queue.push({ type: "walk", x: targetX, footY: groundY });
-      this.queue.push({ type: "hop", x: targetX, footY: perchY, ms: 360 });
+      // Approach whichever side of the window is nearer, then climb the
+      // corner diagonally onto the top — never jump straight up.
+      const edgeX = (this.x < r.left + r.width / 2)
+        ? Math.max(20, r.left + 14)
+        : Math.min(window.innerWidth - 20, r.left + r.width - 14);
+      this.queue.push({ type: "walk", x: edgeX, footY: groundY });
+      this.queue.push({ type: "walk", x: targetX, footY: perchY });
       this.queue.push({ type: "sit", ms: 2600 + Math.random() * 2600 });
-      this.queue.push({ type: "hop", x: targetX, footY: groundY, ms: 360 });
+      this.queue.push({ type: "walk", x: edgeX, footY: groundY });
       this.queue.push({ type: "idle", ms: 600 + Math.random() * 900 });
     } else if (roll < 0.85) {
       const targetX = 50 + Math.random() * Math.max(10, window.innerWidth - 120);
@@ -249,25 +254,36 @@ class Cat {
 
     const step = this.currentStep;
     if (step.type === "walk") {
-      this.state = "walk";
-      const speed = 52; // px/sec
+      // Walk toward {x, footY} at a constant speed (diagonal if footY
+      // differs, e.g. climbing onto a window) — never an instant jump.
+      // If the target is behind the cat, turn to face it first instead of
+      // sliding backwards.
+      const targetFootY = step.footY != null ? step.footY : this.footY;
       const dxw = step.x - this.x;
-      if (Math.abs(dxw) > 1) {
-        this.facing = dxw > 0 ? 1 : -1;
-        const move = speed * (dt / 1000);
-        this.x += Math.sign(dxw) * Math.min(Math.abs(dxw), move);
-        this._maybeStampPaw(settings);
-      } else {
+      const dyw = targetFootY - this.footY;
+      const dist = Math.hypot(dxw, dyw);
+
+      if (dist <= 1.5) {
+        this.x = step.x; this.footY = targetFootY;
         this.currentStep = null;
+      } else {
+        const dir = Math.abs(dxw) > 1 ? Math.sign(dxw) : this.facing;
+        const turning = dir !== this.facing;
+        if (turning) {
+          if (!step.turnStart) step.turnStart = now;
+          this.facing = dir;
+        }
+        if (turning && now - step.turnStart < 180) {
+          this.state = "idle"; // paused, now facing the new direction
+        } else {
+          this.state = "walk";
+          const speed = 52; // px/sec
+          const move = Math.min(dist, speed * (dt / 1000));
+          this.x += (dxw / dist) * move;
+          this.footY += (dyw / dist) * move;
+          if (Math.abs(dxw) >= Math.abs(dyw)) this._maybeStampPaw(settings);
+        }
       }
-    } else if (step.type === "hop") {
-      this.state = "walk";
-      const elapsed = now - this.stepStart;
-      const p = Math.min(1, elapsed / step.ms);
-      const ease = p < 0.5 ? 2 * p * p : -1 + (4 - 2 * p) * p;
-      this.x = this.stepFromX + (step.x - this.stepFromX) * ease;
-      this.footY = this.stepFromFootY + (step.footY - this.stepFromFootY) * ease;
-      if (p >= 1) { this.x = step.x; this.footY = step.footY; this.currentStep = null; }
     } else if (step.type === "sit") {
       this.state = "sit";
       if (now - this.stepStart >= step.ms) this.currentStep = null;
@@ -281,6 +297,7 @@ class Cat {
 
   _maybeStampPaw(settings) {
     if (!settings.trails) return;
+    if (Math.abs(this.footY - this.groundFootY()) > 4) return; // only on the floor
     if (Math.abs(this.x - this.pawStampX) < 15) return;
     this.pawStampX = this.x;
     this.pawSide *= -1;

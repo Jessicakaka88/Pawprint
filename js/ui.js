@@ -16,7 +16,42 @@ const UI = (() => {
     }, milestone ? 4200 : 2600);
   }
 
+  // The panel behaves like a normal floating app window: centered the first
+  // time it opens, then it stays wherever it was last dragged to.
+  function centerPanelIfNeeded() {
+    const panel = document.getElementById("panel");
+    if (panel.dataset.positioned) return;
+    const w = panel.offsetWidth || 340;
+    const h = panel.offsetHeight || 520;
+    panel.style.left = Math.max(20, Math.round((window.innerWidth - w) / 2)) + "px";
+    panel.style.top = Math.max(40, Math.round((window.innerHeight - h) / 2 - 10)) + "px";
+    panel.dataset.positioned = "true";
+  }
+
+  function wirePanelDrag() {
+    const panel = document.getElementById("panel");
+    const handle = document.getElementById("panel-titlebar");
+    let startX, startY, origX, origY, dragging = false;
+    handle.addEventListener("pointerdown", (e) => {
+      dragging = true;
+      panel.classList.add("dragging");
+      startX = e.clientX; startY = e.clientY;
+      const rect = panel.getBoundingClientRect();
+      origX = rect.left; origY = rect.top;
+      handle.setPointerCapture(e.pointerId);
+    });
+    handle.addEventListener("pointermove", (e) => {
+      if (!dragging) return;
+      panel.style.left = Math.round(origX + (e.clientX - startX)) + "px";
+      panel.style.top = Math.max(4, Math.round(origY + (e.clientY - startY))) + "px";
+    });
+    const end = () => { dragging = false; panel.classList.remove("dragging"); };
+    handle.addEventListener("pointerup", end);
+    handle.addEventListener("pointercancel", end);
+  }
+
   function openPanel() {
+    centerPanelIfNeeded();
     document.getElementById("panel").classList.add("open");
     document.getElementById("panel").setAttribute("aria-hidden", "false");
   }
@@ -152,7 +187,8 @@ const UI = (() => {
     wireTabs();
     wireSettings();
     wireDebug();
-    document.getElementById("panel-close").addEventListener("click", closePanel);
+    wirePanelDrag();
+    document.getElementById("panel-close").addEventListener("click", (e) => { e.stopPropagation(); closePanel(); });
     document.getElementById("dock-pawprint").addEventListener("click", () => {
       if (document.getElementById("panel").classList.contains("open")) closePanel();
       else openPanel();

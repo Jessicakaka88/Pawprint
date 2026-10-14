@@ -56,12 +56,16 @@
 
   </div>
 
-  <!-- Control panel (the "app UI") -->
-  <aside id="panel" aria-hidden="true">
-    <header class="panel-header">
-      <div class="panel-title"><span class="panel-title-paw">🐾</span> Pawprint</div>
-      <button id="panel-close" title="Close">✕</button>
-    </header>
+  <!-- Control panel (the "app UI") — a normal floating, draggable app window -->
+  <div id="panel" aria-hidden="true">
+    <div class="window-titlebar" id="panel-titlebar">
+      <div class="traffic-lights">
+        <div class="traffic-light red" id="panel-close" title="Close"></div>
+        <div class="traffic-light yellow"></div>
+        <div class="traffic-light green"></div>
+      </div>
+      <div class="window-title">Pawprint</div>
+    </div>
 
     <nav class="panel-tabs">
       <button class="panel-tab active" data-tab="cats">Cats</button>
@@ -139,7 +143,7 @@
       </div>
 
     </section>
-  </aside>
+  </div>
 
   <script src="js/spriteart.js"></script>
   <script src="js/catdata.js"></script>

@@ -104,7 +104,7 @@ html, body {
 .window-titlebar:active { cursor: grabbing; }
 .traffic-lights { display: flex; gap: 7px; }
 .traffic-light { width: 11px; height: 11px; border-radius: 50%; }
-.traffic-light.red { background: #ff5f57; }
+.traffic-light.red { background: #ff5f57; cursor: pointer; }
 .traffic-light.yellow { background: #febc2e; }
 .traffic-light.green { background: #28c840; }
 .window-title {
@@ -403,41 +403,32 @@ html, body {
 }
 .clipboard-item-copy:hover, .clipboard-item-remove:hover { background: rgba(0,0,0,0.08); }
 
-/* ---------- Control panel ---------- */
+/* ---------- Control panel (a normal floating, draggable app window) ---------- */
 #panel {
   position: fixed;
-  top: 0;
-  right: 0;
-  width: 320px;
-  height: 100%;
-  background: rgba(252,252,253,0.88);
+  width: 340px;
+  height: 520px;
+  max-height: 82vh;
+  background: rgba(252,252,253,0.94);
   backdrop-filter: blur(24px) saturate(1.5);
   -webkit-backdrop-filter: blur(24px) saturate(1.5);
-  border-left: 1px solid rgba(0,0,0,0.08);
-  box-shadow: -10px 0 40px rgba(0,0,0,0.18);
-  transform: translateX(100%);
-  transition: transform 0.28s cubic-bezier(.2,.8,.2,1);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 12px;
+  box-shadow: 0 24px 60px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.15);
   z-index: 3000;
   display: flex;
   flex-direction: column;
+  overflow: hidden;
+  opacity: 0;
+  transform: scale(0.96) translateY(10px);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.18s cubic-bezier(.2,.8,.2,1), box-shadow 0.15s;
 }
-#panel.open { transform: translateX(0); }
+#panel.open { opacity: 1; transform: scale(1) translateY(0); pointer-events: auto; }
+#panel.dragging { transition: none; box-shadow: 0 30px 70px rgba(0,0,0,0.4); }
+#panel .window-titlebar { flex: none; }
 
-.panel-header {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 14px 16px 10px;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
-}
-.panel-title { font-size: 15px; font-weight: 700; color: #222; display: flex; align-items: center; gap: 6px; }
-.panel-title-paw { font-size: 16px; }
-#panel-close {
-  border: none; background: rgba(0,0,0,0.06); width: 26px; height: 26px; border-radius: 50%;
-  cursor: pointer; font-size: 12px; color: #555;
-}
-
-.panel-tabs { display: flex; padding: 8px 10px 0; gap: 4px; }
+.panel-tabs { display: flex; padding: 8px 10px 0; gap: 4px; flex: none; }
 .panel-tab {
   flex: 1;
   border: none;

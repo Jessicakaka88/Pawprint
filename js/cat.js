@@ -578,7 +578,9 @@ class Cat {
     const footY = this.footY - 4 + (Math.random() * 4 - 2);
     print.style.left = (footX - 11) + "px";
     print.style.top = (footY - 11) + "px";
-    print.style.transform = `scaleX(${this.facing})`;
+    // The toes point "up" in the source art — rotate so they point toward
+    // whichever way the cat is facing, like a real print leads the step.
+    print.style.transform = `rotate(${this.facing === 1 ? 90 : -90}deg)`;
     print.innerHTML = `<svg viewBox="0 0 24 24"><path fill="#3a2a1f" d="M12 14c-3 0-5.5 2.1-5.5 4.6 0 1.7 1.6 2.9 3.4 2.9 1 0 1.8-.4 2.1-.4.3 0 1.1.4 2.1.4 1.8 0 3.4-1.2 3.4-2.9C17.5 16.1 15 14 12 14z"/><circle cx="7.2" cy="10.5" r="1.7"/><circle cx="10.6" cy="7.8" r="1.7"/><circle cx="13.4" cy="7.8" r="1.7"/><circle cx="16.8" cy="10.5" r="1.7"/></svg>`;
     document.getElementById("trails-layer").appendChild(print);
     requestAnimationFrame(() => { print.style.opacity = "0"; });

@@ -86,9 +86,11 @@ class Cat {
     this.pawSide = 1;
     this.accessoryEls = {};
     this.manuallyPaused = false;   // per-cat "pause movement" toggle from the hover menu
+    this.hoverPaused = false;      // true while the cat or its hover menu is under the cursor
     this.clipboard = [];           // items dropped onto this cat, session-only
     this.clipboardPanelOpen = false;
     this._hoverHideTimer = null;
+    this._wasFrozen = false;       // edge-detects entering a paused/frozen state
 
     this._buildDom();
     this._wireInput();
@@ -296,13 +298,19 @@ class Cat {
       this.world.openClosetFor(this.def.id);
     });
 
+    // Hovering the cat (or its menu/clipboard panel) holds it still so the
+    // buttons don't drift out from under the cursor while you're using them.
     const show = () => {
       clearTimeout(this._hoverHideTimer);
       menu.classList.add("show");
+      this.hoverPaused = true;
     };
     const scheduleHide = () => {
       clearTimeout(this._hoverHideTimer);
-      this._hoverHideTimer = setTimeout(() => menu.classList.remove("show"), 260);
+      this._hoverHideTimer = setTimeout(() => {
+        menu.classList.remove("show");
+        this.hoverPaused = false;
+      }, 260);
     };
     this.el.addEventListener("pointerenter", show);
     this.el.addEventListener("pointerleave", scheduleHide);
@@ -312,13 +320,16 @@ class Cat {
     this.hoverMenuEl = menu;
     this.hoverPauseBtn = pauseBtn;
     this.hoverClipBtn = clipBtn;
+    this._hoverShow = show;
+    this._hoverScheduleHide = scheduleHide;
   }
 
   _buildClipboardPanel() {
     const panel = document.createElement("div");
     panel.className = "cat-clipboard-panel";
     panel.addEventListener("pointerdown", (e) => e.stopPropagation());
-    panel.addEventListener("pointerenter", () => clearTimeout(this._hoverHideTimer));
+    panel.addEventListener("pointerenter", () => this._hoverShow());
+    panel.addEventListener("pointerleave", () => this._hoverScheduleHide());
     document.getElementById("cats-layer").appendChild(panel);
     this.clipboardPanelEl = panel;
 
@@ -512,7 +523,20 @@ class Cat {
       return;
     }
 
-    if (settings.paused || this.manuallyPaused) { this._render(now); return; }
+    const paused = settings.paused || this.manuallyPaused || this.hoverPaused || this.clipboardPanelOpen;
+    if (paused) {
+      if (!this._wasFrozen) {
+        // Just became paused/hovered — stop wherever we are and sit upright
+        // instead of freezing mid-stride.
+        this._wasFrozen = true;
+        this.queue = [];
+        this.currentStep = null;
+        this.state = "sit";
+      }
+      this._render(now);
+      return;
+    }
+    this._wasFrozen = false;
 
     this._updateCursorGlance();
 

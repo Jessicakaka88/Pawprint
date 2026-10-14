@@ -516,22 +516,34 @@ class Cat {
   _endDrag() {
     this.dragging = false;
     this.el.classList.remove("dragging");
-    this.footY = this._surfaceBelow(this.x, this.footY);
-    const { w } = SPRITEART.sitSize();
-    this.x = Math.max(w / 2, Math.min(window.innerWidth - w / 2, this.x));
+    this._landOnNearestSurface();
     this.state = "idle";
     this.stepStart = performance.now();
     this.currentStep = { type: "idle", ms: 400 };
   }
 
-  _surfaceBelow(centerX, footY) {
+  // On drop, snap onto whichever window is nearest (within reach) instead of
+  // requiring a precise drop onto it — landing dead-center on its top edge —
+  // and fall back to the floor only if nothing is close enough.
+  _landOnNearestSurface() {
+    const SNAP_RADIUS = 170;
     const rects = this.world.getWindowRects();
-    for (const r of rects) {
-      if (centerX > r.left + 6 && centerX < r.left + r.width - 6) {
-        if (footY > r.top - 40 && footY < r.top + r.height) return r.top + 6;
-      }
+    let best = null, bestDist = Infinity;
+    rects.forEach((r) => {
+      const nearX = Math.max(r.left + 12, Math.min(r.left + r.width - 12, this.x));
+      const dist = Math.hypot(this.x - nearX, this.footY - r.top);
+      if (dist < bestDist) { bestDist = dist; best = { nearX, top: r.top }; }
+    });
+
+    if (best && bestDist < SNAP_RADIUS) {
+      this.x = best.nearX;
+      this.footY = best.top + 6;
+    } else {
+      this.footY = this.groundFootY();
     }
-    return this.groundFootY();
+
+    const { w } = SPRITEART.sitSize();
+    this.x = Math.max(w / 2, Math.min(window.innerWidth - w / 2, this.x));
   }
 
   pat() {

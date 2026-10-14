@@ -53,9 +53,16 @@ class Cat {
     this.pawStampX = this.x;
     this.pawSide = 1;
     this.accessoryEls = {};
+    this.manuallyPaused = false;   // per-cat "pause movement" toggle from the hover menu
+    this.clipboard = [];           // items dropped onto this cat, session-only
+    this.clipboardPanelOpen = false;
+    this._hoverHideTimer = null;
 
     this._buildDom();
     this._wireInput();
+    this._wireDropZone();
+    this._buildHoverMenu();
+    this._buildClipboardPanel();
   }
 
   groundFootY() {
@@ -115,6 +122,232 @@ class Cat {
     };
     this.el.addEventListener("pointerup", finish);
     this.el.addEventListener("pointercancel", finish);
+  }
+
+  // Lets the OS's native drag-and-drop drop a real file (or dragged text)
+  // onto the cat, which "saves" it into that cat's clipboard.
+  _wireDropZone() {
+    this.el.addEventListener("dragover", (e) => {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = "copy";
+      this.el.classList.add("drop-hover");
+    });
+    this.el.addEventListener("dragleave", () => {
+      this.el.classList.remove("drop-hover");
+    });
+    this.el.addEventListener("drop", (e) => {
+      e.preventDefault();
+      this.el.classList.remove("drop-hover");
+      this._handleDrop(e.dataTransfer);
+    });
+  }
+
+  _handleDrop(dataTransfer) {
+    const files = Array.from((dataTransfer && dataTransfer.files) || []);
+    if (files.length) {
+      files.forEach((file) => {
+        this._addClipboardItem({
+          name: file.name || "Untitled file",
+          mime: file.type || "application/octet-stream",
+          size: file.size,
+          blobUrl: URL.createObjectURL(file),
+          kind: (file.type || "").startsWith("image/") ? "image" : "file",
+        });
+      });
+      return;
+    }
+    const text = dataTransfer && dataTransfer.getData && dataTransfer.getData("text/plain");
+    if (text) {
+      this._addClipboardItem({
+        name: text.length > 36 ? text.slice(0, 36) + "…" : text,
+        mime: "text/plain",
+        text,
+        kind: "text",
+      });
+    }
+  }
+
+  _addClipboardItem(item) {
+    item.id = "c" + Math.random().toString(36).slice(2, 9);
+    this.clipboard.push(item);
+    this.world.toast(`Saved "${item.name}" to ${this.def.name}'s clipboard`, { icon: "📎" });
+    if (this.clipboardPanelOpen) this._renderClipboardPanel();
+  }
+
+  _removeClipboardItem(id) {
+    const item = this.clipboard.find((it) => it.id === id);
+    if (item && item.blobUrl) URL.revokeObjectURL(item.blobUrl);
+    this.clipboard = this.clipboard.filter((it) => it.id !== id);
+    this._renderClipboardPanel();
+  }
+
+  async _copyItemToClipboard(item) {
+    try {
+      if (item.kind === "text" && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(item.text);
+        this.world.toast("Copied to your clipboard — paste it anywhere.", { icon: "📋" });
+        return;
+      }
+      if (item.blobUrl && navigator.clipboard && window.ClipboardItem) {
+        const blob = await (await fetch(item.blobUrl)).blob();
+        await navigator.clipboard.write([new ClipboardItem({ [blob.type || item.mime]: blob })]);
+        this.world.toast("Copied to your clipboard — paste it anywhere.", { icon: "📋" });
+        return;
+      }
+      throw new Error("clipboard API unavailable");
+    } catch (e) {
+      // Fall back to a plain download so the item can still be "taken out".
+      if (item.blobUrl) {
+        const a = document.createElement("a");
+        a.href = item.blobUrl;
+        a.download = item.name;
+        document.body.appendChild(a);
+        a.click();
+        a.remove();
+        this.world.toast("Your browser blocked clipboard copy — downloaded it instead.", { icon: "⬇️" });
+      }
+    }
+  }
+
+  _buildHoverMenu() {
+    const menu = document.createElement("div");
+    menu.className = "cat-hover-menu";
+
+    const pauseBtn = document.createElement("button");
+    pauseBtn.className = "cat-hover-btn cat-hover-pause";
+    pauseBtn.type = "button";
+    pauseBtn.title = "Pause this cat's movement";
+    pauseBtn.textContent = "⏸";
+
+    const clipBtn = document.createElement("button");
+    clipBtn.className = "cat-hover-btn cat-hover-clipboard";
+    clipBtn.type = "button";
+    clipBtn.title = "Open this cat's clipboard";
+    clipBtn.textContent = "📋";
+
+    const closetBtn = document.createElement("button");
+    closetBtn.className = "cat-hover-btn cat-hover-closet";
+    closetBtn.type = "button";
+    closetBtn.title = "Change closet items";
+    closetBtn.textContent = "🧥";
+
+    [pauseBtn, clipBtn, closetBtn].forEach((btn) => menu.appendChild(btn));
+    document.getElementById("cats-layer").appendChild(menu);
+
+    // Half-circle arc above the cat; each button gets a fixed (--dx, --dy)
+    // offset from the arc's center, animated to on hover ("zoom out" reveal).
+    const radius = 60;
+    [[150, pauseBtn], [90, clipBtn], [30, closetBtn]].forEach(([angleDeg, btn]) => {
+      const rad = (angleDeg * Math.PI) / 180;
+      btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
+      btn.style.setProperty("--dy", (-radius * Math.sin(rad)).toFixed(1) + "px");
+    });
+
+    pauseBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    pauseBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.manuallyPaused = !this.manuallyPaused;
+      pauseBtn.textContent = this.manuallyPaused ? "▶" : "⏸";
+      pauseBtn.title = this.manuallyPaused ? "Resume this cat's movement" : "Pause this cat's movement";
+      pauseBtn.classList.toggle("active", this.manuallyPaused);
+    });
+
+    clipBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    clipBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._toggleClipboardPanel();
+    });
+
+    closetBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    closetBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this.world.openClosetFor(this.def.id);
+    });
+
+    const show = () => {
+      clearTimeout(this._hoverHideTimer);
+      menu.classList.add("show");
+    };
+    const scheduleHide = () => {
+      clearTimeout(this._hoverHideTimer);
+      this._hoverHideTimer = setTimeout(() => menu.classList.remove("show"), 260);
+    };
+    this.el.addEventListener("pointerenter", show);
+    this.el.addEventListener("pointerleave", scheduleHide);
+    menu.addEventListener("pointerenter", show);
+    menu.addEventListener("pointerleave", scheduleHide);
+
+    this.hoverMenuEl = menu;
+    this.hoverPauseBtn = pauseBtn;
+    this.hoverClipBtn = clipBtn;
+  }
+
+  _buildClipboardPanel() {
+    const panel = document.createElement("div");
+    panel.className = "cat-clipboard-panel";
+    panel.addEventListener("pointerdown", (e) => e.stopPropagation());
+    panel.addEventListener("pointerenter", () => clearTimeout(this._hoverHideTimer));
+    document.getElementById("cats-layer").appendChild(panel);
+    this.clipboardPanelEl = panel;
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!this.clipboardPanelOpen) return;
+      if (panel.contains(e.target) || this.hoverClipBtn.contains(e.target)) return;
+      this.clipboardPanelOpen = false;
+      panel.classList.remove("show");
+    });
+  }
+
+  _toggleClipboardPanel() {
+    this.clipboardPanelOpen = !this.clipboardPanelOpen;
+    this.clipboardPanelEl.classList.toggle("show", this.clipboardPanelOpen);
+    if (this.clipboardPanelOpen) this._renderClipboardPanel();
+  }
+
+  _renderClipboardPanel() {
+    const panel = this.clipboardPanelEl;
+    panel.innerHTML = "";
+    const header = document.createElement("div");
+    header.className = "clipboard-panel-header";
+    header.textContent = `${this.def.name}'s clipboard`;
+    panel.appendChild(header);
+
+    if (!this.clipboard.length) {
+      const empty = document.createElement("div");
+      empty.className = "clipboard-empty";
+      empty.textContent = "Drag a file (or dragged text) onto the cat to save it here, then drag it back out later.";
+      panel.appendChild(empty);
+    }
+
+    this.clipboard.forEach((item) => {
+      const row = document.createElement("div");
+      row.className = "clipboard-item";
+      row.draggable = true;
+      const icon = item.kind === "image" ? "🖼️" : item.kind === "text" ? "📝" : "📄";
+      row.innerHTML = `
+        <span class="clipboard-item-icon">${icon}</span>
+        <span class="clipboard-item-name" title="${item.name}">${item.name}</span>
+        <button type="button" class="clipboard-item-copy" title="Copy to system clipboard">📋</button>
+        <button type="button" class="clipboard-item-remove" title="Remove">✕</button>
+      `;
+      row.addEventListener("dragstart", (e) => {
+        if (item.blobUrl) {
+          e.dataTransfer.setData("DownloadURL", `${item.mime}:${item.name}:${item.blobUrl}`);
+        } else if (item.text) {
+          e.dataTransfer.setData("text/plain", item.text);
+        }
+        e.dataTransfer.effectAllowed = "copy";
+      });
+      row.querySelector(".clipboard-item-copy").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._copyItemToClipboard(item);
+      });
+      row.querySelector(".clipboard-item-remove").addEventListener("click", (e) => {
+        e.stopPropagation();
+        this._removeClipboardItem(item.id);
+      });
+      panel.appendChild(row);
+    });
   }
 
   _startDrag() {
@@ -226,7 +459,13 @@ class Cat {
 
   update(now, dt) {
     const settings = this.world.getSettings();
-    if (settings.hidden) { this.el.classList.add("hidden-cat"); return; }
+    if (settings.hidden) {
+      this.el.classList.add("hidden-cat");
+      this.hoverMenuEl.classList.remove("show");
+      this.clipboardPanelEl.classList.remove("show");
+      this.clipboardPanelOpen = false;
+      return;
+    }
     this.el.classList.remove("hidden-cat");
 
     if (this.dragging) {
@@ -241,7 +480,7 @@ class Cat {
       return;
     }
 
-    if (settings.paused) { this._render(now); return; }
+    if (settings.paused || this.manuallyPaused) { this._render(now); return; }
 
     this._updateCursorGlance();
 
@@ -361,6 +600,27 @@ class Cat {
     }
 
     this._renderAccessories(frame);
+    this._renderFloatingUI(frame);
+  }
+
+  _renderFloatingUI(frame) {
+    // Anchor the hover menu at a stable point near the head, regardless of
+    // which pose/frame is currently showing, so it doesn't jitter.
+    const headY = this.footY - SPRITEART.sitSize().h * 0.78;
+    this.hoverMenuEl.style.left = Math.round(this.x) + "px";
+    this.hoverMenuEl.style.top = Math.round(headY) + "px";
+
+    const clipCount = this.clipboard.length;
+    this.hoverClipBtn.classList.toggle("has-items", clipCount > 0);
+    if (clipCount > 0) this.hoverClipBtn.setAttribute("data-count", String(clipCount));
+    else this.hoverClipBtn.removeAttribute("data-count");
+
+    const panelWidth = 210;
+    let panelLeft = this.x + frame.w / 2 + 14;
+    if (panelLeft + panelWidth > window.innerWidth - 10) panelLeft = this.x - frame.w / 2 - 14 - panelWidth;
+    const panelTop = Math.max(34, this.footY - SPRITEART.sitSize().h - 10);
+    this.clipboardPanelEl.style.left = Math.round(panelLeft) + "px";
+    this.clipboardPanelEl.style.top = Math.round(panelTop) + "px";
   }
 
   _renderAccessories(frame) {
@@ -393,6 +653,10 @@ class Cat {
 
   destroy() {
     Object.values(this.accessoryEls).forEach((el) => el.remove());
+    this.clipboard.forEach((item) => { if (item.blobUrl) URL.revokeObjectURL(item.blobUrl); });
+    clearTimeout(this._hoverHideTimer);
+    this.hoverMenuEl.remove();
+    this.clipboardPanelEl.remove();
     this.el.remove();
   }
 }

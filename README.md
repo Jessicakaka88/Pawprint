@@ -35,8 +35,19 @@ Opening `index.html` directly via `file://` also works.
   whichever surface (floor or window top) is under it when you let go.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints that
   fade out after a few seconds.
-- **Open the control panel** (the paw button, bottom-right, or the dock's paw
-  icon) for:
+- **Hover over a cat** — three quick-action buttons "zoom out" into a
+  half-circle arc above its head: ⏸/▶ pauses or resumes just that cat's
+  movement (it's still pettable and draggable while paused), 📋 opens that
+  cat's clipboard (see below), and 🧥 jumps straight to the Closet tab with
+  that cat preselected.
+- **Drop a file on a cat to "save" it.** Drag a file from your OS (or
+  dragged text) onto a cat and it's saved into that cat's own clipboard —
+  a small badge shows how many items it's holding. Hover the cat and tap
+  📋 to see the list; each item can be dragged back out onto your desktop
+  or another app, or copied straight to your system clipboard with the 📋
+  button next to it. Items are session-only (kept in memory, not
+  persisted across a reload).
+- **Open the full control panel** via the dock's paw icon for:
   - **Cats** — show/hide unlocked cats on the desktop; locked ones show what
     streak milestone unlocks them.
   - **Closet** — equip accessories (bandana, bowtie, hat, collar, scarf,
@@ -44,8 +55,8 @@ Opening `index.html` directly via `file://` also works.
   - **Streak** — your current daily streak, the full milestone timeline, and
     **prototype demo tools** to simulate the next day or a missed day so you
     can preview the reward loop without waiting on real calendar days.
-  - **Settings** — hide all cats, pause movement & interactions, and toggle
-    purring sound / paw prints.
+  - **Settings** — hide all cats, pause movement & interactions globally,
+    and toggle purring sound / paw prints.
 - **Drag the fake windows** by their title bars — cats treat them as real
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
@@ -75,13 +86,13 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   handling (tap-to-pat vs. drag, with a movement/time threshold to tell
   them apart), frame selection (walk-cycle animation, sit, patted, a
   tilted/stretched walk frame standing in for "dragged"), paw-print
-  stamping, heart/sparkle particles, and a tiny synthesized purr via the
-  Web Audio API. Cursor reaction is approximated by having an idle/sitting
-  cat turn to face the cursor when it comes close.
-- `js/cat.js` — a `Cat`'s behavior: wander/perch state machine, pointer
-  handling (tap-to-pat vs. drag, with a movement/time threshold to tell
-  them apart), paw-print stamping, heart/sparkle particles, and a tiny
-  synthesized purr via the Web Audio API.
+  stamping, heart/sparkle particles, a tiny synthesized purr via the Web
+  Audio API, the per-cat hover menu (pause/clipboard/closet, arranged on a
+  half-circle via a `--dx`/`--dy` CSS custom property per button), and the
+  HTML5 drag-and-drop "clipboard" (native `dragover`/`drop` to save a file
+  or dragged text, `DownloadURL`/Clipboard API to take it back out).
+  Cursor reaction is approximated by having an idle/sitting cat turn to
+  face the cursor when it comes close.
 - `js/streak.js` — streak, unlock, and settings persistence (`localStorage`),
   including the day-advance debug helpers used by the Streak tab's demo
   tools.

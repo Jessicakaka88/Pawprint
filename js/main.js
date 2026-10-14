@@ -12,6 +12,8 @@
       UI.onPatResult(result);
       return result;
     },
+    toast: (message, opts) => UI.toast(message, opts),
+    openClosetFor: (catId) => UI.openClosetFor(catId),
   };
 
   function syncActiveCats() {

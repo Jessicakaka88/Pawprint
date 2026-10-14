@@ -17,23 +17,32 @@ const UI = (() => {
 
   function openPanel() {
     document.getElementById("panel").classList.add("open");
-    document.getElementById("panel-opener").classList.add("panel-open");
     document.getElementById("panel").setAttribute("aria-hidden", "false");
   }
   function closePanel() {
     document.getElementById("panel").classList.remove("open");
-    document.getElementById("panel-opener").classList.remove("panel-open");
     document.getElementById("panel").setAttribute("aria-hidden", "true");
+  }
+
+  function selectTab(tabName) {
+    document.querySelectorAll(".panel-tab").forEach((t) => t.classList.remove("active"));
+    document.querySelectorAll(".panel-page").forEach((p) => (p.hidden = true));
+    document.querySelector(`.panel-tab[data-tab="${tabName}"]`).classList.add("active");
+    document.querySelector(`.panel-page[data-page="${tabName}"]`).hidden = false;
+  }
+
+  // Opens the panel straight to the Closet tab with a specific cat preselected —
+  // used by each cat's hover menu ("change closet items").
+  function openClosetFor(catId) {
+    closetSelectedCat = catId;
+    renderCloset();
+    selectTab("closet");
+    openPanel();
   }
 
   function wireTabs() {
     document.querySelectorAll(".panel-tab").forEach((tab) => {
-      tab.addEventListener("click", () => {
-        document.querySelectorAll(".panel-tab").forEach((t) => t.classList.remove("active"));
-        document.querySelectorAll(".panel-page").forEach((p) => (p.hidden = true));
-        tab.classList.add("active");
-        document.querySelector(`.panel-page[data-page="${tab.dataset.tab}"]`).hidden = false;
-      });
+      tab.addEventListener("click", () => selectTab(tab.dataset.tab));
     });
   }
 
@@ -190,7 +199,6 @@ const UI = (() => {
     wireTabs();
     wireSettings();
     wireDebug();
-    document.getElementById("panel-opener").addEventListener("click", openPanel);
     document.getElementById("panel-close").addEventListener("click", closePanel);
     document.getElementById("dock-pawprint").addEventListener("click", () => {
       if (document.getElementById("panel").classList.contains("open")) closePanel();
@@ -213,5 +221,8 @@ const UI = (() => {
     }
   }
 
-  return { init, toast, renderAll, renderRoster, renderCloset, renderStreak, onPatResult, openPanel, closePanel };
+  return {
+    init, toast, renderAll, renderRoster, renderCloset, renderStreak, onPatResult,
+    openPanel, closePanel, openClosetFor,
+  };
 })();

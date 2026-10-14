@@ -13,7 +13,7 @@
       return result;
     },
     toast: (message, opts) => UI.toast(message, opts),
-    openClosetFor: (catId) => UI.openClosetFor(catId),
+    toggleEquip: (catId, accessoryId) => StreakManager.toggleEquip(catId, accessoryId),
   };
 
   function syncActiveCats() {

@@ -35,12 +35,12 @@ const SPRITEART = (() => {
   // Approximate accessory anchor points (ratio of frame width/height, from
   // top-left) for each facing/pose, hand-picked by eyeballing the art.
   const ANCHORS = {
-    walk_r: { head: { x: 0.76, y: 0.0 }, neck: { x: 0.64, y: 0.56 } },
-    walk_l: { head: { x: 0.24, y: 0.0 }, neck: { x: 0.36, y: 0.56 } },
-    sit_r: { head: { x: 0.66, y: -0.02 }, neck: { x: 0.55, y: 0.65 } },
-    sit_l: { head: { x: 0.34, y: -0.02 }, neck: { x: 0.45, y: 0.65 } },
-    sit_front: { head: { x: 0.5, y: 0.0 }, neck: { x: 0.5, y: 0.6 } },
-    dangle: { head: { x: 0.5, y: 0.0 }, neck: { x: 0.5, y: 0.35 } },
+    walk_r: { head: { x: 0.76, y: 0.0 }, neck: { x: 0.64, y: 0.56 }, feet: { x: 0.58, y: 0.97 } },
+    walk_l: { head: { x: 0.24, y: 0.0 }, neck: { x: 0.36, y: 0.56 }, feet: { x: 0.42, y: 0.97 } },
+    sit_r: { head: { x: 0.66, y: -0.02 }, neck: { x: 0.55, y: 0.65 }, feet: { x: 0.42, y: 0.97 } },
+    sit_l: { head: { x: 0.34, y: -0.02 }, neck: { x: 0.45, y: 0.65 }, feet: { x: 0.42, y: 0.97 } },
+    sit_front: { head: { x: 0.5, y: 0.0 }, neck: { x: 0.5, y: 0.6 }, feet: { x: 0.5, y: 0.97 } },
+    dangle: { head: { x: 0.5, y: 0.0 }, neck: { x: 0.5, y: 0.35 }, feet: { x: 0.5, y: 0.85 } },
   };
 
   const cache = {}; // palette -> { frameName: HTMLImageElement }

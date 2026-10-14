@@ -65,7 +65,6 @@
 
     <nav class="panel-tabs">
       <button class="panel-tab active" data-tab="cats">Cats</button>
-      <button class="panel-tab" data-tab="closet">Closet</button>
       <button class="panel-tab" data-tab="streak">Streak</button>
       <button class="panel-tab" data-tab="settings">Settings</button>
     </nav>
@@ -73,14 +72,8 @@
     <section class="panel-body">
 
       <div class="panel-page" data-page="cats">
-        <p class="panel-hint">Tap a cat to show or hide it on your desktop. Locked cats unlock at streak milestones.</p>
+        <p class="panel-hint">Tap a cat to show or hide it on your desktop. Locked cats unlock at streak milestones. Hover a cat on the desktop and tap 🧥 to open its closet.</p>
         <div id="cat-roster" class="cat-roster"></div>
-      </div>
-
-      <div class="panel-page" data-page="closet" hidden>
-        <p class="panel-hint">Accessories you've earned. Equip them on any cat you own.</p>
-        <div id="closet-cat-picker" class="closet-cat-picker"></div>
-        <div id="closet-grid" class="closet-grid"></div>
       </div>
 
       <div class="panel-page" data-page="streak" hidden>

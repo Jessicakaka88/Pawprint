@@ -1,13 +1,22 @@
 /* Static catalog of cats, accessories, and the streak milestones that unlock them. */
 
 const ACCESSORIES = {
-  bandana: { name: "Red Bandana", glyph: "🧣", slot: "neck" },
-  bowtie: { name: "Blue Bowtie", glyph: "🎀", slot: "neck" },
-  party_hat: { name: "Party Hat", glyph: "🎉", slot: "head" },
-  bell_collar: { name: "Bell Collar", glyph: "🔔", slot: "neck" },
-  flower_crown: { name: "Flower Crown", glyph: "🌸", slot: "head" },
-  scarf: { name: "Cozy Scarf", glyph: "🧶", slot: "neck" },
+  party_hat: { name: "Party Hat", glyph: "🎉", slot: "head", category: "hat" },
+  flower_crown: { name: "Flower Crown", glyph: "🌸", slot: "head", category: "hat" },
+  bandana: { name: "Red Bandana", glyph: "🧣", slot: "neck", category: "clothes" },
+  scarf: { name: "Cozy Scarf", glyph: "🧶", slot: "neck", category: "clothes" },
+  boots: { name: "Lil Boots", glyph: "🥾", slot: "feet", category: "shoes" },
+  bowtie: { name: "Blue Bowtie", glyph: "🎀", slot: "neck", category: "accessories" },
+  bell_collar: { name: "Bell Collar", glyph: "🔔", slot: "neck", category: "accessories" },
 };
+
+// Tabs shown in each cat's floating closet board, in display order.
+const CLOSET_CATEGORIES = [
+  { id: "hat", label: "Hat" },
+  { id: "clothes", label: "Clothes" },
+  { id: "shoes", label: "Shoes" },
+  { id: "accessories", label: "Accessories" },
+];
 
 const CAT_CATALOG = [
   { id: "mochi", name: "Mochi", palette: "mochi", unlockDays: 0, blurb: "Your very first desk pet. Loves sunny windowsills." },
@@ -18,6 +27,7 @@ const CAT_CATALOG = [
 
 const ACCESSORY_MILESTONES = [
   { id: "bandana", unlockDays: 3 },
+  { id: "boots", unlockDays: 10 },
   { id: "bell_collar", unlockDays: 14 },
   { id: "bowtie", unlockDays: 21 },
   { id: "scarf", unlockDays: 45 },

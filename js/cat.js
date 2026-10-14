@@ -91,6 +91,8 @@ class Cat {
     this.hoverPaused = false;      // true while the cat or its hover menu is under the cursor
     this.clipboard = [];           // items dropped onto this cat, session-only
     this.clipboardPanelOpen = false;
+    this.closetPanelOpen = false;
+    this.closetActiveCategory = CLOSET_CATEGORIES[0].id;
     this._hoverHideTimer = null;
     this._wasFrozen = false;       // edge-detects entering a paused/frozen state
 
@@ -99,6 +101,7 @@ class Cat {
     this._wireDropZone();
     this._buildHoverMenu();
     this._buildClipboardPanel();
+    this._buildClosetPanel();
   }
 
   groundFootY() {
@@ -130,6 +133,9 @@ class Cat {
       pointerOffsetX = e.clientX - this.x;
       pointerOffsetY = e.clientY - this.footY;
       this.el.setPointerCapture(e.pointerId);
+      // Clear the hover buttons/boards out of the way the moment you click,
+      // so they don't float around mid-drag.
+      this._hideFloatingMenus();
     });
     this.el.addEventListener("pointermove", (e) => {
       if (downX == null) return;
@@ -159,6 +165,9 @@ class Cat {
         this._endDrag();
       }
       downX = null;
+      // The cursor is still over the cat (or just dropped it) — bring the
+      // hover menu back.
+      this._hoverShow();
     };
     this.el.addEventListener("pointerup", finish);
     this.el.addEventListener("pointercancel", finish);
@@ -301,7 +310,7 @@ class Cat {
     closetBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
     closetBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      this.world.openClosetFor(this.def.id);
+      this._toggleClosetPanel();
     });
 
     // Hovering the cat (or its menu/clipboard panel) holds it still so the
@@ -326,8 +335,22 @@ class Cat {
     this.hoverMenuEl = menu;
     this.hoverPauseBtn = pauseBtn;
     this.hoverClipBtn = clipBtn;
+    this.hoverClosetBtn = closetBtn;
     this._hoverShow = show;
     this._hoverScheduleHide = scheduleHide;
+  }
+
+  // Clicking (or starting to drag) the cat clears every floating button/board
+  // out of the way immediately, so they aren't hanging around while you're
+  // petting or lifting it.
+  _hideFloatingMenus() {
+    clearTimeout(this._hoverHideTimer);
+    this.hoverMenuEl.classList.remove("show");
+    this.hoverPaused = false;
+    this.clipboardPanelOpen = false;
+    this.clipboardPanelEl.classList.remove("show");
+    this.closetPanelOpen = false;
+    this.closetPanelEl.classList.remove("show");
   }
 
   _buildClipboardPanel() {
@@ -397,6 +420,88 @@ class Cat {
       });
       panel.appendChild(row);
     });
+  }
+
+  _buildClosetPanel() {
+    const panel = document.createElement("div");
+    panel.className = "cat-closet-panel";
+    panel.addEventListener("pointerdown", (e) => e.stopPropagation());
+    panel.addEventListener("pointerenter", () => this._hoverShow());
+    panel.addEventListener("pointerleave", () => this._hoverScheduleHide());
+    document.getElementById("cats-layer").appendChild(panel);
+    this.closetPanelEl = panel;
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!this.closetPanelOpen) return;
+      if (panel.contains(e.target) || this.hoverClosetBtn.contains(e.target)) return;
+      this.closetPanelOpen = false;
+      panel.classList.remove("show");
+    });
+  }
+
+  _toggleClosetPanel() {
+    this.closetPanelOpen = !this.closetPanelOpen;
+    this.closetPanelEl.classList.toggle("show", this.closetPanelOpen);
+    if (this.closetPanelOpen) this._renderClosetPanel();
+  }
+
+  _renderClosetPanel() {
+    const panel = this.closetPanelEl;
+    panel.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "closet-panel-header";
+    header.textContent = `${this.def.name}'s closet`;
+    panel.appendChild(header);
+
+    const tabs = document.createElement("div");
+    tabs.className = "closet-panel-tabs";
+    CLOSET_CATEGORIES.forEach((cat) => {
+      const tab = document.createElement("button");
+      tab.type = "button";
+      tab.className = "closet-panel-tab" + (cat.id === this.closetActiveCategory ? " active" : "");
+      tab.textContent = cat.label;
+      tab.addEventListener("click", () => {
+        this.closetActiveCategory = cat.id;
+        this._renderClosetPanel();
+      });
+      tabs.appendChild(tab);
+    });
+    panel.appendChild(tabs);
+
+    const grid = document.createElement("div");
+    grid.className = "closet-panel-grid";
+    const state = StreakManager.get();
+    const equippedList = state.equipped[this.def.id] || [];
+    const items = Object.entries(ACCESSORIES).filter(([, acc]) => acc.category === this.closetActiveCategory);
+
+    if (!items.length) {
+      const empty = document.createElement("div");
+      empty.className = "closet-panel-empty";
+      empty.textContent = "Nothing here yet — keep up the streak to unlock more.";
+      grid.appendChild(empty);
+    }
+
+    items.forEach(([id, acc]) => {
+      const unlocked = state.unlockedAccessories.includes(id);
+      const equipped = equippedList.includes(id);
+      const milestone = ACCESSORY_MILESTONES.find((m) => m.id === id);
+      const item = document.createElement("div");
+      item.className = "closet-panel-item" + (unlocked ? "" : " locked") + (equipped ? " equipped" : "");
+      item.innerHTML = `
+        <div class="closet-panel-item-glyph">${acc.glyph}</div>
+        <div class="closet-panel-item-name">${acc.name}</div>
+        <div class="closet-panel-item-req">${unlocked ? (equipped ? "Equipped ✓" : "Tap to equip") : `${milestone.unlockDays}-day streak`}</div>
+      `;
+      if (unlocked) {
+        item.addEventListener("click", () => {
+          this.world.toggleEquip(this.def.id, id);
+          this._renderClosetPanel();
+        });
+      }
+      grid.appendChild(item);
+    });
+    panel.appendChild(grid);
   }
 
   _startDrag() {
@@ -511,9 +616,7 @@ class Cat {
     const settings = this.world.getSettings();
     if (settings.hidden) {
       this.el.classList.add("hidden-cat");
-      this.hoverMenuEl.classList.remove("show");
-      this.clipboardPanelEl.classList.remove("show");
-      this.clipboardPanelOpen = false;
+      this._hideFloatingMenus();
       return;
     }
     this.el.classList.remove("hidden-cat");
@@ -538,7 +641,8 @@ class Cat {
       return;
     }
 
-    const paused = settings.paused || this.manuallyPaused || this.hoverPaused || this.clipboardPanelOpen;
+    const paused = settings.paused || this.manuallyPaused || this.hoverPaused
+      || this.clipboardPanelOpen || this.closetPanelOpen;
     if (paused) {
       if (!this._wasFrozen) {
         // Just became paused/hovered — stop wherever we are and sit upright
@@ -577,15 +681,21 @@ class Cat {
         this.x = step.x; this.footY = targetFootY;
         this.currentStep = null;
       } else {
-        const dir = Math.abs(dxw) > 1 ? Math.sign(dxw) : this.facing;
-        const turning = dir !== this.facing;
-        if (turning) {
-          if (!step.turnStart) step.turnStart = now;
-          this.facing = dir;
+        // `step.turning` is sticky for the whole 180ms pause — recomputing
+        // the direction check fresh every frame would see `this.facing`
+        // already updated and immediately clear it after a single frame.
+        if (!step.turning) {
+          const dir = Math.abs(dxw) > 1 ? Math.sign(dxw) : this.facing;
+          if (dir !== this.facing) {
+            step.turning = true;
+            step.turnStart = now;
+            this.facing = dir;
+          }
         }
-        if (turning && now - step.turnStart < 180) {
+        if (step.turning && now - step.turnStart < 180) {
           this.state = "idle"; // paused, now facing the new direction
         } else {
+          step.turning = false;
           this.state = "walk";
           const speed = 52; // px/sec
           const move = Math.min(dist, speed * (dt / 1000));
@@ -695,6 +805,16 @@ class Cat {
     const panelTop = Math.max(34, this.footY - SPRITEART.sitSize().h - 10);
     this.clipboardPanelEl.style.left = Math.round(panelLeft) + "px";
     this.clipboardPanelEl.style.top = Math.round(panelTop) + "px";
+
+    // The closet board floats directly above the cat's head, like a little
+    // signboard — centered, and lifted clear of the hover menu's arc.
+    const closetWidth = 230;
+    let closetLeft = this.x - closetWidth / 2;
+    closetLeft = Math.max(10, Math.min(window.innerWidth - closetWidth - 10, closetLeft));
+    const closetH = this.closetPanelEl.offsetHeight || 220;
+    const closetTop = Math.max(34, headY - closetH - 78);
+    this.closetPanelEl.style.left = Math.round(closetLeft) + "px";
+    this.closetPanelEl.style.top = Math.round(closetTop) + "px";
   }
 
   _renderAccessories(frame) {
@@ -731,6 +851,7 @@ class Cat {
     clearTimeout(this._hoverHideTimer);
     this.hoverMenuEl.remove();
     this.clipboardPanelEl.remove();
+    this.closetPanelEl.remove();
     this.el.remove();
   }
 }

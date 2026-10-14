@@ -498,33 +498,69 @@ html, body {
 .cat-card-toggle.active { background: #34c759; color: #fff; }
 .cat-card-toggle:disabled { cursor: default; }
 
-.closet-cat-picker { display: flex; gap: 6px; margin-bottom: 12px; flex-wrap: wrap; }
-.closet-cat-chip {
-  border: 1px solid rgba(0,0,0,0.1);
-  background: #fff;
-  border-radius: 20px;
-  padding: 5px 10px;
-  font-size: 11px;
-  cursor: pointer;
-  font-weight: 600;
-  color: #555;
+/* ---------- Per-cat closet board (floats above the cat, like a signboard) ---------- */
+.cat-closet-panel {
+  position: absolute;
+  width: 230px;
+  max-height: 300px;
+  background: rgba(252,252,253,0.95);
+  backdrop-filter: blur(18px) saturate(1.5);
+  -webkit-backdrop-filter: blur(18px) saturate(1.5);
+  border: 1px solid rgba(0,0,0,0.08);
+  border-radius: 14px;
+  box-shadow: 0 14px 34px rgba(0,0,0,0.28);
+  padding: 9px;
+  z-index: 1100;
+  opacity: 0;
+  transform: translateY(6px) scale(0.96);
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+  display: flex;
+  flex-direction: column;
 }
-.closet-cat-chip.active { background: #2b2b2b; color: #fff; border-color: #2b2b2b; }
+.cat-closet-panel.show { opacity: 1; transform: translateY(0) scale(1); pointer-events: auto; }
+.closet-panel-header {
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #999;
+  padding: 2px 4px 7px;
+}
+.closet-panel-tabs { display: flex; gap: 4px; padding: 0 2px 8px; }
+.closet-panel-tab {
+  flex: 1;
+  border: none;
+  background: rgba(0,0,0,0.045);
+  color: #666;
+  font-size: 10.5px;
+  font-weight: 700;
+  padding: 6px 2px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.closet-panel-tab.active { background: #2b2b2b; color: #fff; }
 
-.closet-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
-.closet-item {
+.closet-panel-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  overflow-y: auto;
+}
+.closet-panel-item {
   background: rgba(0,0,0,0.035);
-  border-radius: 12px;
-  padding: 10px;
+  border-radius: 10px;
+  padding: 8px;
   text-align: center;
   border: 1px solid rgba(0,0,0,0.05);
   cursor: pointer;
 }
-.closet-item.locked { opacity: 0.5; cursor: default; }
-.closet-item.equipped { border-color: #ff9d6c; background: rgba(255,157,108,0.12); }
-.closet-item-glyph { font-size: 24px; margin-bottom: 4px; }
-.closet-item-name { font-size: 11px; font-weight: 700; color: #333; }
-.closet-item-req { font-size: 9.5px; color: #999; margin-top: 2px; }
+.closet-panel-item.locked { opacity: 0.5; cursor: default; }
+.closet-panel-item.equipped { border-color: #ff9d6c; background: rgba(255,157,108,0.14); }
+.closet-panel-item-glyph { font-size: 20px; margin-bottom: 3px; }
+.closet-panel-item-name { font-size: 10px; font-weight: 700; color: #333; line-height: 1.2; }
+.closet-panel-item-req { font-size: 8.5px; color: #999; margin-top: 2px; }
+.closet-panel-empty { font-size: 11px; color: #888; padding: 6px 4px; grid-column: 1 / -1; line-height: 1.4; }
 
 .streak-hero {
   display: flex;

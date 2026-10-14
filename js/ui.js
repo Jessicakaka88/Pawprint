@@ -1,4 +1,5 @@
-/* Control panel: cat roster, closet, streak tab, settings, toasts. */
+/* Control panel: cat roster, streak tab, settings, toasts. (Closet is now a
+   floating board on each cat itself — see js/cat.js.) */
 
 const UI = (() => {
   let onRosterChange = () => {};
@@ -29,15 +30,6 @@ const UI = (() => {
     document.querySelectorAll(".panel-page").forEach((p) => (p.hidden = true));
     document.querySelector(`.panel-tab[data-tab="${tabName}"]`).classList.add("active");
     document.querySelector(`.panel-page[data-page="${tabName}"]`).hidden = false;
-  }
-
-  // Opens the panel straight to the Closet tab with a specific cat preselected —
-  // used by each cat's hover menu ("change closet items").
-  function openClosetFor(catId) {
-    closetSelectedCat = catId;
-    renderCloset();
-    selectTab("closet");
-    openPanel();
   }
 
   function wireTabs() {
@@ -73,44 +65,6 @@ const UI = (() => {
         onRosterChange();
       });
       root.appendChild(card);
-    });
-  }
-
-  let closetSelectedCat = "mochi";
-  function renderCloset() {
-    const state = StreakManager.get();
-    const picker = document.getElementById("closet-cat-picker");
-    picker.innerHTML = "";
-    CAT_CATALOG.filter((c) => state.unlockedCats.includes(c.id)).forEach((c) => {
-      const chip = document.createElement("div");
-      chip.className = "closet-cat-chip" + (c.id === closetSelectedCat ? " active" : "");
-      chip.textContent = c.name;
-      chip.addEventListener("click", () => { closetSelectedCat = c.id; renderCloset(); });
-      picker.appendChild(chip);
-    });
-
-    const grid = document.getElementById("closet-grid");
-    grid.innerHTML = "";
-    const equippedList = state.equipped[closetSelectedCat] || [];
-    Object.entries(ACCESSORIES).forEach(([id, acc]) => {
-      const unlocked = state.unlockedAccessories.includes(id);
-      const equipped = equippedList.includes(id);
-      const milestone = ACCESSORY_MILESTONES.find((m) => m.id === id);
-      const item = document.createElement("div");
-      item.className = "closet-item" + (unlocked ? "" : " locked") + (equipped ? " equipped" : "");
-      item.innerHTML = `
-        <div class="closet-item-glyph">${acc.glyph}</div>
-        <div class="closet-item-name">${acc.name}</div>
-        <div class="closet-item-req">${unlocked ? (equipped ? "Equipped ✓" : "Tap to equip") : `${milestone.unlockDays}-day streak`}</div>
-      `;
-      if (unlocked) {
-        item.addEventListener("click", () => {
-          StreakManager.toggleEquip(closetSelectedCat, id);
-          renderCloset();
-          onRosterChange();
-        });
-      }
-      grid.appendChild(item);
     });
   }
 
@@ -153,7 +107,6 @@ const UI = (() => {
 
   function renderAll() {
     renderRoster();
-    renderCloset();
     renderStreak();
     renderSettings();
   }
@@ -216,13 +169,10 @@ const UI = (() => {
     (result.milestonesHit || []).forEach((m) => {
       toast(`New unlock: ${m.label}!`, { milestone: true, icon: "🎉" });
     });
-    if (result.milestonesHit && result.milestonesHit.length) {
-      renderCloset();
-    }
   }
 
   return {
-    init, toast, renderAll, renderRoster, renderCloset, renderStreak, onPatResult,
-    openPanel, closePanel, openClosetFor,
+    init, toast, renderAll, renderRoster, renderStreak, onPatResult,
+    openPanel, closePanel,
   };
 })();

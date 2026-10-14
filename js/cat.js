@@ -80,7 +80,9 @@ class Cat {
     this.stepStart = 0;
     this.stepFromX = this.x; this.stepFromFootY = this.footY;
     this.patUntil = 0;
-    this.dragSwing = 0;
+    this.dragSwing = 0;       // -1 = limbs swung far left, +1 = far right
+    this.dragVX = 0;          // smoothed cursor velocity while lifted (px/move)
+    this.dragVY = 0;
     this.dragging = false;
     this.pawStampX = this.x;
     this.pawSide = 1;
@@ -135,13 +137,17 @@ class Cat {
       if (!movedFar && Math.hypot(dx, dy) > 6) {
         movedFar = true;
         this._startDrag();
+        // Hold the cat by the scruff: the cursor sits on the back of its head.
+        const { w, h } = SPRITEART.dangleSize();
+        pointerOffsetX = w * (SPRITEART.DANGLE_SCRUFF.x - 0.5);
+        pointerOffsetY = h * SPRITEART.DANGLE_SCRUFF.y - h;
       }
       if (movedFar) {
-        const prevX = this.x;
+        const prevX = this.x, prevY = this.footY;
         this.x = e.clientX - pointerOffsetX;
         this.footY = e.clientY - pointerOffsetY;
-        this.dragSwing = Math.max(-1, Math.min(1, (this.x - prevX) / 8));
-        if (Math.abs(e.movementX || 0) > 0.5) this.facing = (e.movementX || 0) >= 0 ? 1 : -1;
+        this.dragVX = this.dragVX * 0.5 + (this.x - prevX) * 0.5;
+        this.dragVY = this.dragVY * 0.5 + (this.footY - prevY) * 0.5;
       }
     });
     const finish = () => {
@@ -396,6 +402,7 @@ class Cat {
   _startDrag() {
     this.dragging = true;
     this.state = "dragged";
+    this.dragSwing = 0; this.dragVX = 0; this.dragVY = 0;
     this.queue = [];
     this.currentStep = null;
     this.el.classList.add("dragging");
@@ -512,7 +519,15 @@ class Cat {
     this.el.classList.remove("hidden-cat");
 
     if (this.dragging) {
-      this.dragSwing *= 0.9;
+      // Limbs trail behind the motion like a pendulum: cursor moving right
+      // swings them left, moving left swings them right. Moving up or down
+      // (or holding still) lets them settle back to hanging straight down.
+      const vx = this.dragVX, vy = this.dragVY;
+      const horizontal = Math.abs(vx) >= Math.abs(vy) * 0.6;
+      const target = horizontal ? Math.max(-1, Math.min(1, -vx / 9)) : 0;
+      this.dragSwing += (target - this.dragSwing) * 0.25;
+      this.dragVX *= 0.82; // decays when the cursor stops moving
+      this.dragVY *= 0.82;
       this._render(now);
       return;
     }
@@ -617,9 +632,10 @@ class Cat {
       return { name: SPRITEART.FRAME_NAMES.sitFront, anchorKey: "sit_front", ...SPRITEART.sitSize() };
     }
     if (this.dragging) {
-      const frames = this.facing === 1 ? SPRITEART.FRAME_NAMES.walkR : SPRITEART.FRAME_NAMES.walkL;
-      const anchorKey = this.facing === 1 ? "walk_r" : "walk_l";
-      return { name: frames[3], anchorKey, ...SPRITEART.walkSize() };
+      const frames = SPRITEART.FRAME_NAMES.dangle;
+      const s = this.dragSwing;
+      const idx = s < -0.6 ? 0 : s < -0.2 ? 1 : s <= 0.2 ? 2 : s <= 0.6 ? 3 : 4;
+      return { name: frames[idx], anchorKey: "dangle", ...SPRITEART.dangleSize() };
     }
     if (this.state === "walk") {
       const frames = this.facing === 1 ? SPRITEART.FRAME_NAMES.walkR : SPRITEART.FRAME_NAMES.walkL;
@@ -649,10 +665,10 @@ class Cat {
     this.el.style.height = frame.h + "px";
 
     if (this.dragging) {
-      const tilt = (this.dragSwing || 0) * 12;
-      const skew = (this.dragSwing || 0) * -6;
-      this.img.style.transform = `rotate(${tilt}deg) skewX(${skew}deg) scaleY(1.14)`;
-      this.img.style.transformOrigin = "50% 15%";
+      // Yanked upward, the dangling body stretches down a little.
+      const stretch = 1 + Math.min(0.08, Math.max(0, -this.dragVY) / 150);
+      this.img.style.transform = `scaleY(${stretch.toFixed(3)})`;
+      this.img.style.transformOrigin = "50% 0";
     } else {
       this.img.style.transform = "";
     }

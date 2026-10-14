@@ -43,5 +43,16 @@
       "walk_right_5",
       "walk_right_6"
     ]
+  },
+  "dangle": {
+    "w": 318,
+    "h": 264,
+    "frames": [
+      "dangle_l2",
+      "dangle_l1",
+      "dangle",
+      "dangle_r1",
+      "dangle_r2"
+    ]
   }
 }

@@ -185,7 +185,8 @@ html, body {
 
 .heart-particle {
   position: absolute;
-  font-size: 14px;
+  line-height: 0;
+  image-rendering: pixelated;
   pointer-events: none;
   animation: heart-float 1.1s ease-out forwards;
 }

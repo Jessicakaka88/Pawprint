@@ -138,6 +138,43 @@ html, body {
 }
 .paw-print svg { width: 100%; height: 100%; display: block; }
 
+/* ---------- Playful-mode mess (toys/messes left behind) ---------- */
+#mess-layer { position: absolute; inset: 0; z-index: 25; pointer-events: none; }
+.mess-item {
+  position: absolute;
+  width: 26px;
+  height: 26px;
+  font-size: 20px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  pointer-events: auto;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+  transform: scale(0);
+  animation: mess-pop 0.3s cubic-bezier(.34,1.5,.64,1) forwards;
+}
+.mess-item:hover { transform: scale(1.15); }
+.mess-item.picked-up { animation: mess-pickup 0.32s ease-in forwards; pointer-events: none; }
+@keyframes mess-pop { to { transform: scale(1); } }
+@keyframes mess-pickup {
+  0% { transform: scale(1); opacity: 1; }
+  100% { transform: scale(0.3) translateY(-26px); opacity: 0; }
+}
+
+/* ---------- Toy play (left out on the desk, or being played with) ---------- */
+.active-toy {
+  position: absolute;
+  font-size: 22px;
+  pointer-events: none;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.25));
+}
+.active-toy.playing { animation: toy-wiggle 0.5s ease-in-out infinite; }
+@keyframes toy-wiggle {
+  0%, 100% { transform: rotate(-12deg) translateY(0); }
+  50% { transform: rotate(12deg) translateY(-3px); }
+}
+
 /* ---------- Cats layer ---------- */
 #cats-layer { position: absolute; inset: 0; z-index: 900; pointer-events: none; }
 
@@ -547,11 +584,23 @@ html, body {
   cursor: pointer;
 }
 .closet-panel-item.locked { opacity: 0.5; cursor: default; }
-.closet-panel-item.equipped { border-color: #ff9d6c; background: rgba(255,157,108,0.14); }
+.closet-panel-item.equipped, .closet-panel-item.active-item { border-color: #ff9d6c; background: rgba(255,157,108,0.14); }
 .closet-panel-item-glyph { font-size: 20px; margin-bottom: 3px; }
 .closet-panel-item-name { font-size: 10px; font-weight: 700; color: #333; line-height: 1.2; }
 .closet-panel-item-req { font-size: 8.5px; color: #999; margin-top: 2px; }
 .closet-panel-empty { font-size: 11px; color: #888; padding: 6px 4px; grid-column: 1 / -1; line-height: 1.4; }
+
+.toybox-return-hint {
+  font-size: 10.5px;
+  color: #c9622f;
+  background: rgba(255,157,108,0.14);
+  border-radius: 8px;
+  padding: 7px 8px;
+  margin-top: 8px;
+  line-height: 1.4;
+  text-align: center;
+  font-weight: 600;
+}
 
 .streak-hero {
   display: flex;

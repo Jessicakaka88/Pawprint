@@ -39,6 +39,9 @@
     <!-- Ground-level layer for fading paw prints -->
     <div id="trails-layer"></div>
 
+    <!-- Playful-mode clutter (toys/messes left behind) — click to pick up -->
+    <div id="mess-layer"></div>
+
     <!-- Layer where cats + their particles live (always above windows, like a real desk-pet overlay) -->
     <div id="cats-layer"></div>
 
@@ -137,6 +140,17 @@
           </div>
           <label class="switch">
             <input type="checkbox" id="toggle-trails" checked />
+            <span class="switch-track"><span class="switch-thumb"></span></span>
+          </label>
+        </div>
+
+        <div class="setting-row mode-row">
+          <div>
+            <div class="setting-title">Playful mode</div>
+            <div class="setting-sub" id="mode-description">Serious mode — cats just walk around. Switch on for cats that leave toys and little messes behind to pick up.</div>
+          </div>
+          <label class="switch">
+            <input type="checkbox" id="toggle-playful" />
             <span class="switch-track"><span class="switch-thumb"></span></span>
           </label>
         </div>

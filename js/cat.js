@@ -93,6 +93,10 @@ class Cat {
     this.clipboardPanelOpen = false;
     this.closetPanelOpen = false;
     this.closetActiveCategory = CLOSET_CATEGORIES[0].id;
+    this.toyboxPanelOpen = false;
+    this.playing = false;          // actively playing with a toy (frozen, animated)
+    this.activeToyId = null;
+    this.activeToyEl = null;       // the toy sprite on the desk — stays after play ends ("left out")
     this._hoverHideTimer = null;
     this._wasFrozen = false;       // edge-detects entering a paused/frozen state
 
@@ -102,6 +106,7 @@ class Cat {
     this._buildHoverMenu();
     this._buildClipboardPanel();
     this._buildClosetPanel();
+    this._buildToyboxPanel();
   }
 
   groundFootY() {
@@ -280,13 +285,19 @@ class Cat {
     closetBtn.title = "Change closet items";
     closetBtn.textContent = "🧥";
 
-    [pauseBtn, clipBtn, closetBtn].forEach((btn) => menu.appendChild(btn));
+    const toyBtn = document.createElement("button");
+    toyBtn.className = "cat-hover-btn cat-hover-toybox";
+    toyBtn.type = "button";
+    toyBtn.title = "Toy box";
+    toyBtn.textContent = "🧸";
+
+    [pauseBtn, clipBtn, closetBtn, toyBtn].forEach((btn) => menu.appendChild(btn));
     document.getElementById("cats-layer").appendChild(menu);
 
     // Half-circle arc above the cat; each button gets a fixed (--dx, --dy)
     // offset from the arc's center, animated to on hover ("zoom out" reveal).
-    const radius = 60;
-    [[150, pauseBtn], [90, clipBtn], [30, closetBtn]].forEach(([angleDeg, btn]) => {
+    const radius = 62;
+    [[160, pauseBtn], [113, clipBtn], [67, closetBtn], [20, toyBtn]].forEach(([angleDeg, btn]) => {
       const rad = (angleDeg * Math.PI) / 180;
       btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
       btn.style.setProperty("--dy", (-radius * Math.sin(rad)).toFixed(1) + "px");
@@ -313,6 +324,13 @@ class Cat {
       this._toggleClosetPanel();
     });
 
+    toyBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    toyBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      if (this.playing) this._endPlay();
+      else this._toggleToyboxPanel();
+    });
+
     // Hovering the cat (or its menu/clipboard panel) holds it still so the
     // buttons don't drift out from under the cursor while you're using them.
     const show = () => {
@@ -336,6 +354,7 @@ class Cat {
     this.hoverPauseBtn = pauseBtn;
     this.hoverClipBtn = clipBtn;
     this.hoverClosetBtn = closetBtn;
+    this.hoverToyBtn = toyBtn;
     this._hoverShow = show;
     this._hoverScheduleHide = scheduleHide;
   }
@@ -351,6 +370,9 @@ class Cat {
     this.clipboardPanelEl.classList.remove("show");
     this.closetPanelOpen = false;
     this.closetPanelEl.classList.remove("show");
+    this.toyboxPanelOpen = false;
+    this.toyboxPanelEl.classList.remove("show");
+    if (this.playing) this._endPlay();
   }
 
   _buildClipboardPanel() {
@@ -372,6 +394,10 @@ class Cat {
 
   _toggleClipboardPanel() {
     this.clipboardPanelOpen = !this.clipboardPanelOpen;
+    if (this.clipboardPanelOpen) {
+      this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
+      this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+    }
     this.clipboardPanelEl.classList.toggle("show", this.clipboardPanelOpen);
     if (this.clipboardPanelOpen) this._renderClipboardPanel();
   }
@@ -441,6 +467,10 @@ class Cat {
 
   _toggleClosetPanel() {
     this.closetPanelOpen = !this.closetPanelOpen;
+    if (this.closetPanelOpen) {
+      this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
+      this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+    }
     this.closetPanelEl.classList.toggle("show", this.closetPanelOpen);
     if (this.closetPanelOpen) this._renderClosetPanel();
   }
@@ -502,6 +532,114 @@ class Cat {
       grid.appendChild(item);
     });
     panel.appendChild(grid);
+  }
+
+  _buildToyboxPanel() {
+    const panel = document.createElement("div");
+    panel.className = "cat-closet-panel cat-toybox-panel";
+    panel.addEventListener("pointerdown", (e) => e.stopPropagation());
+    panel.addEventListener("pointerenter", () => this._hoverShow());
+    panel.addEventListener("pointerleave", () => this._hoverScheduleHide());
+    document.getElementById("cats-layer").appendChild(panel);
+    this.toyboxPanelEl = panel;
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!this.toyboxPanelOpen) return;
+      if (panel.contains(e.target) || this.hoverToyBtn.contains(e.target)) return;
+      this.toyboxPanelOpen = false;
+      panel.classList.remove("show");
+    });
+  }
+
+  _toggleToyboxPanel() {
+    this.toyboxPanelOpen = !this.toyboxPanelOpen;
+    if (this.toyboxPanelOpen) {
+      this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
+      this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
+    }
+    this.toyboxPanelEl.classList.toggle("show", this.toyboxPanelOpen);
+    if (this.toyboxPanelOpen) this._renderToyboxPanel();
+  }
+
+  _renderToyboxPanel() {
+    const panel = this.toyboxPanelEl;
+    panel.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "closet-panel-header";
+    header.textContent = `${this.def.name}'s toy box`;
+    panel.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "closet-panel-grid";
+    const unlockedToys = this.world.getUnlockedToys();
+
+    if (!unlockedToys.length) {
+      const empty = document.createElement("div");
+      empty.className = "closet-panel-empty";
+      empty.textContent = "No toys yet — keep up the streak to unlock some.";
+      grid.appendChild(empty);
+    }
+
+    Object.entries(TOYS).forEach(([id, toy]) => {
+      const unlocked = unlockedToys.includes(id);
+      const milestone = TOY_MILESTONES.find((m) => m.id === id);
+      const item = document.createElement("div");
+      item.className = "closet-panel-item" + (unlocked ? "" : " locked") + (this.activeToyId === id && this.playing ? " active-item" : "");
+      item.innerHTML = `
+        <div class="closet-panel-item-glyph">${toy.glyph}</div>
+        <div class="closet-panel-item-name">${toy.name}</div>
+        <div class="closet-panel-item-req">${unlocked ? "Tap to play" : `${milestone.unlockDays}-day streak`}</div>
+      `;
+      if (unlocked) {
+        item.addEventListener("click", () => this._startPlay(id));
+      }
+      grid.appendChild(item);
+    });
+    panel.appendChild(grid);
+
+    if (this.playing) {
+      const hint = document.createElement("div");
+      hint.className = "toybox-return-hint";
+      hint.textContent = "Playing — tap 🧸 again to call your cat back.";
+      panel.appendChild(hint);
+    }
+  }
+
+  _startPlay(toyId) {
+    if (this.dragging) return;
+    this._removeActiveToy();
+    this.playing = true;
+    this.activeToyId = toyId;
+    this.queue = [];
+    this.currentStep = null;
+    this.toyboxPanelOpen = false;
+    this.toyboxPanelEl.classList.remove("show");
+
+    const el = document.createElement("div");
+    el.className = "active-toy playing";
+    el.textContent = TOYS[toyId].glyph;
+    document.getElementById("cats-layer").appendChild(el);
+    this.activeToyEl = el;
+    this.hoverToyBtn.classList.add("active");
+    this.hoverToyBtn.title = "Call your cat back";
+  }
+
+  // Ends the play session — the toy stays behind on the desk ("left out")
+  // until the cat happens to walk over it again, or you unequip by dropping
+  // a new toy next time.
+  _endPlay() {
+    if (!this.playing) return;
+    this.playing = false;
+    this.activeToyId = null;
+    this.hoverToyBtn.classList.remove("active");
+    this.hoverToyBtn.title = "Toy box";
+    if (this.activeToyEl) this.activeToyEl.classList.remove("playing");
+    this.currentStep = { type: "idle", ms: 300 };
+  }
+
+  _removeActiveToy() {
+    if (this.activeToyEl) { this.activeToyEl.remove(); this.activeToyEl = null; }
   }
 
   _startDrag() {
@@ -600,7 +738,9 @@ class Cat {
         : Math.min(window.innerWidth - 20, r.left + r.width - 14);
       this.queue.push({ type: "walk", x: edgeX, footY: groundY });
       this.queue.push({ type: "walk", x: targetX, footY: perchY });
-      this.queue.push({ type: "sit", ms: 2600 + Math.random() * 2600 });
+      // While sitting, rigidly track the window's element so dragging the
+      // window carries the cat along with it.
+      this.queue.push({ type: "sit", ms: 5000 + Math.random() * 5000, anchorEl: r.el, anchorOffsetX: targetX - r.left });
       this.queue.push({ type: "walk", x: edgeX, footY: groundY });
       this.queue.push({ type: "idle", ms: 600 + Math.random() * 900 });
     } else if (roll < 0.85) {
@@ -654,7 +794,7 @@ class Cat {
     }
 
     const paused = settings.paused || this.manuallyPaused || this.hoverPaused
-      || this.clipboardPanelOpen || this.closetPanelOpen;
+      || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen || this.playing;
     if (paused) {
       if (!this._wasFrozen) {
         // Just became paused/hovered — stop wherever we are and sit upright
@@ -713,11 +853,25 @@ class Cat {
           const move = Math.min(dist, speed * (dt / 1000));
           this.x += (dxw / dist) * move;
           this.footY += (dyw / dist) * move;
-          if (Math.abs(dxw) >= Math.abs(dyw)) this._maybeStampPaw(settings);
+          if (Math.abs(dxw) >= Math.abs(dyw)) {
+            this._maybeStampPaw(settings);
+            this._maybeDropMess(settings, now);
+          }
         }
       }
     } else if (step.type === "sit") {
       this.state = "sit";
+      if (step.anchorEl) {
+        // Sitting on a window — ride along with it if it gets dragged, and
+        // hop down early if it closes out from under us.
+        if (step.anchorEl.offsetParent === null) {
+          this.footY = this.groundFootY();
+          this.currentStep = null;
+        } else {
+          this.x = step.anchorEl.offsetLeft + step.anchorOffsetX;
+          this.footY = step.anchorEl.offsetTop + 6;
+        }
+      }
       if (now - this.stepStart >= step.ms) this.currentStep = null;
     } else if (step.type === "idle") {
       this.state = "idle";
@@ -746,6 +900,32 @@ class Cat {
     document.getElementById("trails-layer").appendChild(print);
     requestAnimationFrame(() => { print.style.opacity = "0"; });
     setTimeout(() => print.remove(), 3000);
+  }
+
+  // Playful mode: every so often while wandering the floor, leave a little
+  // mess behind — click it to pick it up.
+  _maybeDropMess(settings, now) {
+    if (!settings.playful) return;
+    if (Math.abs(this.footY - this.groundFootY()) > 4) return; // only on the floor
+    if (this._nextMessAt == null) this._nextMessAt = now + 6000 + Math.random() * 6000;
+    if (now < this._nextMessAt) return;
+    this._nextMessAt = now + 12000 + Math.random() * 14000;
+
+    const glyphs = ["💩", "💩", "🧶", "🐭", "🪶"]; // poop shows up a bit more often than toys
+    const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
+    const mess = document.createElement("div");
+    mess.className = "mess-item";
+    mess.textContent = glyph;
+    mess.style.left = (this.x - 13 + (Math.random() * 10 - 5)) + "px";
+    mess.style.top = (this.footY - 26) + "px";
+    mess.title = "Click to pick up";
+    mess.addEventListener("click", () => {
+      if (mess.classList.contains("picked-up")) return;
+      mess.classList.add("picked-up");
+      this.world.toast(glyph === "💩" ? "Cleaned up after your cat 🧹" : "Picked up a toy left behind 🧸", { icon: "✨" });
+      setTimeout(() => mess.remove(), 350);
+    });
+    document.getElementById("mess-layer").appendChild(mess);
   }
 
   _currentFrame(now) {
@@ -827,6 +1007,21 @@ class Cat {
     const closetTop = Math.max(34, headY - closetH - 78);
     this.closetPanelEl.style.left = Math.round(closetLeft) + "px";
     this.closetPanelEl.style.top = Math.round(closetTop) + "px";
+
+    const toyboxWidth = 230;
+    let toyboxLeft = this.x - toyboxWidth / 2;
+    toyboxLeft = Math.max(10, Math.min(window.innerWidth - toyboxWidth - 10, toyboxLeft));
+    const toyboxH = this.toyboxPanelEl.offsetHeight || 220;
+    const toyboxTop = Math.max(34, headY - toyboxH - 78);
+    this.toyboxPanelEl.style.left = Math.round(toyboxLeft) + "px";
+    this.toyboxPanelEl.style.top = Math.round(toyboxTop) + "px";
+
+    // The active toy sits on the ground right beside the cat while it plays.
+    if (this.activeToyEl) {
+      const toyX = this.x + (this.facing === 1 ? -frame.w * 0.45 : frame.w * 0.45);
+      this.activeToyEl.style.left = Math.round(toyX - 11) + "px";
+      this.activeToyEl.style.top = Math.round(this.footY - 24) + "px";
+    }
   }
 
   _renderAccessories(frame) {
@@ -861,9 +1056,11 @@ class Cat {
     Object.values(this.accessoryEls).forEach((el) => el.remove());
     this.clipboard.forEach((item) => { if (item.blobUrl) URL.revokeObjectURL(item.blobUrl); });
     clearTimeout(this._hoverHideTimer);
+    this._removeActiveToy();
     this.hoverMenuEl.remove();
     this.clipboardPanelEl.remove();
     this.closetPanelEl.remove();
+    this.toyboxPanelEl.remove();
     this.el.remove();
   }
 }

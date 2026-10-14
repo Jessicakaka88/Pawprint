@@ -138,6 +138,10 @@ const UI = (() => {
     document.getElementById("toggle-pause").checked = !!s.paused;
     document.getElementById("toggle-sound").checked = !!s.sound;
     document.getElementById("toggle-trails").checked = !!s.trails;
+    document.getElementById("toggle-playful").checked = !!s.playful;
+    document.getElementById("mode-description").textContent = s.playful
+      ? "Playful mode — cats leave toys and little messes behind as they wander. Click one to pick it up."
+      : "Serious mode — cats just walk around. Switch on for cats that leave toys and little messes behind to pick up.";
   }
 
   function renderAll() {
@@ -158,6 +162,10 @@ const UI = (() => {
     });
     document.getElementById("toggle-trails").addEventListener("change", (e) => {
       StreakManager.setSetting("trails", e.target.checked);
+    });
+    document.getElementById("toggle-playful").addEventListener("change", (e) => {
+      StreakManager.setSetting("playful", e.target.checked);
+      renderSettings();
     });
   }
 

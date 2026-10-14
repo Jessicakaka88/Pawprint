@@ -24,8 +24,9 @@ const StreakManager = (() => {
       unlockedCats: ["mochi"],
       activeCats: ["mochi"],
       unlockedAccessories: [],
+      unlockedToys: [],
       equipped: {},           // catId -> [accessoryId,...]
-      settings: { hidden: false, paused: false, sound: true, trails: true },
+      settings: { hidden: false, paused: false, sound: true, trails: true, playful: false },
       seenMilestones: [],
     };
   }
@@ -92,6 +93,9 @@ const StreakManager = (() => {
         }
         if (m.kind === "accessory" && !state.unlockedAccessories.includes(m.refId)) {
           state.unlockedAccessories.push(m.refId);
+        }
+        if (m.kind === "toy" && !state.unlockedToys.includes(m.refId)) {
+          state.unlockedToys.push(m.refId);
         }
         hits.push(m);
       }

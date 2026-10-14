@@ -7,6 +7,38 @@
 const CatMouse = { x: -9999, y: -9999 };
 document.addEventListener("pointermove", (e) => { CatMouse.x = e.clientX; CatMouse.y = e.clientY; });
 
+// Pink pixel-art heart shown above a cat's head when it's patted.
+// Grid: X = heart, outline/shade/highlight are derived from neighbours.
+const PIXEL_HEART_SVG = (() => {
+  const g = [
+    "..XXX...XXX..",
+    ".XXXXX.XXXXX.",
+    "XXXXXXXXXXXXX",
+    "XXXXXXXXXXXXX",
+    "XXXXXXXXXXXXX",
+    ".XXXXXXXXXXX.",
+    "..XXXXXXXXX..",
+    "...XXXXXXX...",
+    "....XXXXX....",
+    ".....XXX.....",
+    "......X......",
+  ];
+  const on = (r, c) => r >= 0 && r < g.length && c >= 0 && c < 13 && g[r][c] === "X";
+  const highlight = new Set(["1,2", "1,3", "2,1", "2,2", "3,1"]);
+  let rects = "";
+  for (let r = 0; r < g.length; r++) {
+    for (let c = 0; c < 13; c++) {
+      if (!on(r, c)) continue;
+      let col = "#ff6fa5"; // fill
+      if (!on(r - 1, c) || !on(r + 1, c) || !on(r, c - 1) || !on(r, c + 1)) col = "#8a1c4a"; // outline
+      else if (highlight.has(r + "," + c)) col = "#ffd1e3"; // shine
+      else if (!on(r + 1, c + 1) || !on(r + 2, c) || (r >= 6 && c >= 7)) col = "#e64a87"; // shade
+      rects += `<rect x="${c}" y="${r}" width="1" height="1" fill="${col}"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 13 11" width="26" height="22" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
+})();
+
 let sharedAudioCtx = null;
 function playPurr() {
   try {
@@ -163,9 +195,9 @@ class Cat {
     for (let i = 0; i < count; i++) {
       const el = document.createElement("div");
       el.className = "heart-particle";
-      el.textContent = Math.random() > 0.5 ? "💗" : "💕";
+      el.innerHTML = PIXEL_HEART_SVG;
       el.style.left = (this.x + w * 0.22 + (Math.random() * 20 - 10)) + "px";
-      el.style.top = (this.footY - h + 6) + "px";
+      el.style.top = (this.footY - h - 8) + "px";
       el.style.animationDelay = (i * 120) + "ms";
       document.getElementById("cats-layer").appendChild(el);
       setTimeout(() => el.remove(), 1400 + i * 120);

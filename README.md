@@ -45,11 +45,13 @@ Opening `index.html` directly via `file://` also works.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints,
   rotated to point the way it's heading, that fade out after a few seconds.
 - **Hover over a cat** — four buttons "zoom out" into a half-circle arc above
-  its head (and the cat holds still the whole time you're hovering or using
-  one, so they're not a moving target):
+  its head. Hovering just freezes the cat exactly as it is — mid-stride,
+  sitting, lying down, whatever it was doing — so the buttons aren't a
+  moving target, without snapping it into a sit first.
   - **⏸/▶** pauses or resumes just that cat's movement (still pettable and
-    draggable while paused) — it sits upright and holds still, not just
-    freezes mid-stride.
+    draggable while paused) — this one does sit it upright and hold still,
+    not just freeze mid-stride, since pausing is a deliberate "stop" rather
+    than a passing hover.
   - **📋** opens that cat's clipboard: drag a file (or dragged text) from your
     OS onto the cat to save it there, then drag items back out to your
     desktop/another app, or copy them straight to your system clipboard.

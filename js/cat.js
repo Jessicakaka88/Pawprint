@@ -99,7 +99,8 @@ class Cat {
     this.activeToyId = null;
     this.activeToyEl = null;       // the toy sprite on the desk — stays after play ends ("left out")
     this._hoverHideTimer = null;
-    this._wasFrozen = false;       // edge-detects entering a paused/frozen state
+    this._wasFrozen = false;       // edge-detects entering a hard-paused (sit-snap) state
+    this._wasHoverFrozen = false;  // edge-detects entering a hover freeze (no pose change)
 
     this._buildDom();
     this._wireInput();
@@ -807,12 +808,16 @@ class Cat {
       return;
     }
 
-    const paused = settings.paused || this.manuallyPaused || this.hoverPaused
-      || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen || this.playing;
-    if (paused) {
+    // An explicit pause (the pause button, the global setting) or an open
+    // panel/toy session stops the cat and sits it upright, since those are
+    // deliberate "stop and let me interact" actions.
+    const hardPause = settings.paused || this.manuallyPaused || this.playing
+      || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen;
+    if (hardPause) {
+      this._wasHoverFrozen = false; // let a later hover re-capture its own freeze frame
       if (!this._wasFrozen) {
-        // Just became paused/hovered — stop wherever we are and sit upright
-        // instead of freezing mid-stride.
+        // Just became paused — stop wherever we are and sit upright instead
+        // of freezing mid-stride.
         this._wasFrozen = true;
         this.queue = [];
         this.currentStep = null;
@@ -822,6 +827,20 @@ class Cat {
       return;
     }
     this._wasFrozen = false;
+
+    // Just hovering (to reach the hover menu) is not a "stop and sit"
+    // command — it freezes the cat exactly where and as it is, walk-cycle
+    // frame included, by rendering with the instant hovering began instead
+    // of the live clock, rather than snapping it into a sit.
+    if (this.hoverPaused) {
+      if (!this._wasHoverFrozen) {
+        this._wasHoverFrozen = true;
+        this._hoverFreezeNow = now;
+      }
+      this._render(this._hoverFreezeNow);
+      return;
+    }
+    this._wasHoverFrozen = false;
 
     this._updateCursorGlance();
     this._maybeDropMess(settings, now);

@@ -19,6 +19,10 @@ const SPRITEART = (() => {
   // fills its box while a walking cat is a leaner, thinner silhouette — so
   // sit gets its own, smaller scale to look the same size next to it.
   const SIT_DISPLAY_SCALE = 0.44;
+  // The front-facing "patted" pose and the lying-down pose read bigger than
+  // walk/sit too, for the same reason — each gets its own tuned scale.
+  const SIT_FRONT_DISPLAY_SCALE = 0.4;
+  const LIE_DISPLAY_SCALE = 0.44;
 
   // Pixel dimensions of each pose group's shared frame canvas (see assets/cats/manifest.json).
   const DIMS = {
@@ -83,10 +87,10 @@ const SPRITEART = (() => {
   }
 
   function sitSize() { return { w: DIMS.sit.w * SIT_DISPLAY_SCALE, h: DIMS.sit.h * SIT_DISPLAY_SCALE }; }
-  function sitFrontSize() { return { w: DIMS.sitFront.w * DISPLAY_SCALE, h: DIMS.sitFront.h * DISPLAY_SCALE }; }
+  function sitFrontSize() { return { w: DIMS.sitFront.w * SIT_FRONT_DISPLAY_SCALE, h: DIMS.sitFront.h * SIT_FRONT_DISPLAY_SCALE }; }
   function walkSize() { return { w: DIMS.walk.w * WALK_DISPLAY_SCALE, h: DIMS.walk.h * WALK_DISPLAY_SCALE }; }
   function dangleSize() { return { w: DIMS.dangle.w * DISPLAY_SCALE, h: DIMS.dangle.h * DISPLAY_SCALE }; }
-  function lieSize() { return { w: DIMS.lie.w * DISPLAY_SCALE, h: DIMS.lie.h * DISPLAY_SCALE }; }
+  function lieSize() { return { w: DIMS.lie.w * LIE_DISPLAY_SCALE, h: DIMS.lie.h * LIE_DISPLAY_SCALE }; }
 
   preload();
 

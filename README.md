@@ -26,12 +26,15 @@ Opening `index.html` directly via `file://` also works.
 - **Watch a cat live on the desktop.** It wanders the "desktop," occasionally
   climbs up and rests on top of one of the fake app windows (Finder/Notes)
   for a random 5–10 seconds, then climbs back down, or settles on the floor
-  to sit or lie down for a stretch. Drag the window it's sitting on — the
-  cat rides along, rigidly tracking the window's position, and hops off onto
-  the floor if that window closes out from under it. Move your mouse near a
-  cat that's just standing still (idle) and it glances to face the cursor;
-  once it's settled into a sit or a lie-down it holds that facing steady
-  instead of flicking back and forth as the cursor passes by.
+  to sit (always for 3+ seconds) or lie down for a stretch — always facing
+  the same way it was just walking, never the opposite direction, and never
+  sitting right after another sit (it'll walk or lie down instead). Drag the
+  window it's sitting on — the cat rides along, rigidly tracking the
+  window's position, and hops off onto the floor if that window closes out
+  from under it. Move your mouse near a cat that's just standing still
+  (idle) and it glances to face the cursor; once it's settled into a sit or
+  a lie-down it holds that facing steady instead of flicking back and forth
+  as the cursor passes by.
 - **Pat it.** Click/tap the cat for a quick pat: it purrs (synthesized sound,
   toggleable), squints happily, and a pixel-art heart floats up. This also
   records today's care streak.

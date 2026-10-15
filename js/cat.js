@@ -72,6 +72,7 @@ class Cat {
     this.def = def;           // {id, name, palette}
     this.world = world;       // callbacks: onPat(result), getSettings(), getEquipped(id), getWindowRects()
     this.facing = 1;          // 1 = right, -1 = left
+    this.lastWalkFacing = 1;  // facing as of the last time it actually walked; sit/lie lock onto this
     this.x = 140 + Math.random() * 300;      // center x
     this.footY = this.groundFootY();          // baseline (feet) y
     this.state = "idle";
@@ -725,6 +726,10 @@ class Cat {
   _planNext() {
     const groundY = this.groundFootY();
     const rects = this.world.getWindowRects();
+    // A direct floor sit never walks anywhere first, so if it followed
+    // another direct floor sit it would just be an invisible facing flip
+    // while appearing to stay put — only walking or lying down may follow it.
+    const avoidSit = this._lastPlannedType === "sit";
     const roll = Math.random();
     if (roll < 0.22 && rects.length) {
       const r = rects[Math.floor(Math.random() * rects.length)];
@@ -743,16 +748,20 @@ class Cat {
       this.queue.push({ type: "sit", ms: 5000 + Math.random() * 5000, anchorEl: r.el, anchorOffsetX: targetX - r.left });
       this.queue.push({ type: "walk", x: edgeX, footY: groundY });
       this.queue.push({ type: "idle", ms: 600 + Math.random() * 900 });
+      this._lastPlannedType = "perch";
     } else if (roll < 0.85) {
       const targetX = 50 + Math.random() * Math.max(10, window.innerWidth - 120);
       this.queue.push({ type: "walk", x: targetX, footY: groundY });
       this.queue.push({ type: "idle", ms: 900 + Math.random() * 2200 });
-    } else if (roll < 0.93) {
-      this.queue.push({ type: "sit", ms: 2000 + Math.random() * 2000 });
+      this._lastPlannedType = "walk";
+    } else if (!avoidSit && roll < 0.93) {
+      this.queue.push({ type: "sit", ms: 3000 + Math.random() * 3000 });
       this.queue.push({ type: "idle", ms: 400 });
+      this._lastPlannedType = "sit";
     } else {
       this.queue.push({ type: "lie", ms: 3000 + Math.random() * 3000 });
       this.queue.push({ type: "idle", ms: 400 });
+      this._lastPlannedType = "lie";
     }
   }
 
@@ -850,6 +859,10 @@ class Cat {
             this.facing = dir;
           }
         }
+        // Remembered so a sit/lie that follows (with no walk in between)
+        // keeps facing the way the cat was just walking, instead of
+        // whatever a cursor glance during the idle gap left it at.
+        this.lastWalkFacing = this.facing;
         if (step.turning && now - step.turnStart < 180) {
           this.state = "idle"; // paused, now facing the new direction
         } else {
@@ -866,6 +879,7 @@ class Cat {
       }
     } else if (step.type === "sit") {
       this.state = "sit";
+      this.facing = this.lastWalkFacing; // match the way it was just walking, not a stray cursor glance
       if (step.anchorEl) {
         // Sitting on a window — ride along with it if it gets dragged, and
         // hop down early if it closes out from under us.
@@ -880,6 +894,7 @@ class Cat {
       if (now - this.stepStart >= step.ms) this.currentStep = null;
     } else if (step.type === "lie") {
       this.state = "lying";
+      this.facing = this.lastWalkFacing; // match the way it was just walking, not a stray cursor glance
       if (now - this.stepStart >= step.ms) this.currentStep = null;
     } else if (step.type === "idle") {
       this.state = "idle";

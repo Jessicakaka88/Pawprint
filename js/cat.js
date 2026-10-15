@@ -60,7 +60,7 @@ const PIXEL_Z_SVG = (() => {
       rects += `<rect x="${c}" y="${r}" width="1" height="1" fill="${col}"/>`;
     }
   }
-  return `<svg viewBox="0 0 7 7" width="14" height="14" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
+  return `<svg viewBox="0 0 7 7" width="10" height="10" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
 })();
 
 let sharedAudioCtx = null;
@@ -751,17 +751,32 @@ class Cat {
     }
   }
 
-  // While lying down, drift a little pixel-art "Z" up from its head every so
-  // often, like it's dozing off. Timed off the current step object so each
-  // fresh lie-down starts its own cycle instead of carrying over a stale one.
+  // While lying down, drift little pixel-art "Z"s up from above its back
+  // ear — three in quick succession, then a pause, on repeat — like it's
+  // dozing off. Timed off the current step object so each fresh lie-down
+  // starts its own cycle instead of carrying over a stale one.
   _maybeSpawnZzz(now) {
     const step = this.currentStep;
-    if (step._nextZzzAt == null) step._nextZzzAt = now + 400;
+    if (step._nextZzzAt == null) {
+      step._nextZzzAt = now + 400;
+      step._zzzBurstIndex = 0;
+    }
     if (now < step._nextZzzAt) return;
-    step._nextZzzAt = now + 1600 + Math.random() * 900;
 
+    this._spawnZzzParticle();
+    step._zzzBurstIndex++;
+    if (step._zzzBurstIndex >= 3) {
+      step._zzzBurstIndex = 0;
+      step._nextZzzAt = now + 1000; // pause after a burst of 3 before the next one
+    } else {
+      step._nextZzzAt = now + 350; // quick succession within a burst
+    }
+  }
+
+  _spawnZzzParticle() {
     const { w, h } = SPRITEART.lieSize();
-    const headX = this.x + (this.facing === 1 ? w * 0.3 : -w * 0.3);
+    // The back ear (away from the snout), not the front one closest to it.
+    const headX = this.x + (this.facing === 1 ? w * 0.14 : -w * 0.14);
     const headY = this.footY - h * 0.92;
     const el = document.createElement("div");
     el.className = "zzz-particle";
@@ -769,7 +784,7 @@ class Cat {
     el.style.left = Math.round(headX) + "px";
     el.style.top = Math.round(headY) + "px";
     document.getElementById("cats-layer").appendChild(el);
-    setTimeout(() => el.remove(), 2300);
+    setTimeout(() => el.remove(), 1300);
   }
 
   _planNext() {

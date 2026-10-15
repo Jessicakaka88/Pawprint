@@ -27,8 +27,9 @@ Opening `index.html` directly via `file://` also works.
   climbs up and rests on top of one of the fake app windows (Finder/Notes)
   for a random 5–10 seconds, then climbs back down, or settles on the floor
   to sit (always for 3+ seconds) or lie down for a longer stretch (10–30
-  seconds, with a little pixel-art "Z" drifting up from its head every so
-  often while it dozes) — always facing the same way it was just walking,
+  seconds, with little pixel-art "Z"s drifting up above its back ear — three
+  at a time, then a pause — while it dozes) — always facing the same way it
+  was just walking,
   never the opposite direction, and never sitting right after another sit
   (it'll walk or lie down instead). Drag the window it's sitting on — the
   cat rides along, rigidly tracking the window's position, and hops off onto

@@ -25,10 +25,13 @@ Opening `index.html` directly via `file://` also works.
 
 - **Watch a cat live on the desktop.** It wanders the "desktop," occasionally
   climbs up and rests on top of one of the fake app windows (Finder/Notes)
-  for a random 5–10 seconds, then climbs back down. Drag the window it's
-  sitting on — the cat rides along, rigidly tracking the window's position,
-  and hops off onto the floor if that window closes out from under it. Move
-  your mouse near an idle/sitting cat and it turns to face the cursor.
+  for a random 5–10 seconds, then climbs back down, or settles on the floor
+  to sit or lie down for a stretch. Drag the window it's sitting on — the
+  cat rides along, rigidly tracking the window's position, and hops off onto
+  the floor if that window closes out from under it. Move your mouse near a
+  cat that's just standing still (idle) and it glances to face the cursor;
+  once it's settled into a sit or a lie-down it holds that facing steady
+  instead of flicking back and forth as the cursor passes by.
 - **Pat it.** Click/tap the cat for a quick pat: it purrs (synthesized sound,
   toggleable), squints happily, and a pixel-art heart floats up. This also
   records today's care streak.
@@ -89,15 +92,16 @@ Opening `index.html` directly via `file://` also works.
 Vanilla HTML/CSS/JS, no dependencies or build step:
 
 - `assets/cats/` — hand-drawn pixel-art cat sprites (walking loop, sitting,
-  and front-facing poses), derived from a single reference sheet and
-  recolored per cat into four palettes (`shadow`, `mochi`, `snowy`,
-  `celestial`) by remapping its fur/eye colors with a small Python script.
+  lying down, scruff-dangle, and front-facing poses), derived from reference
+  sheets and recolored per cat into four palettes (`shadow`, `mochi`,
+  `snowy`, `celestial`) by remapping their fur/eye colors with a small
+  Python script.
 - `js/spriteart.js` — preloads every sprite frame and exposes frame
   dimensions and rough accessory anchor points (head/neck) per pose.
-- `js/cat.js` — a `Cat`'s behavior: wander/perch state machine, pointer
+- `js/cat.js` — a `Cat`'s behavior: wander/perch/rest state machine, pointer
   handling (tap-to-pat vs. drag, with a movement/time threshold to tell
-  them apart), frame selection (walk-cycle animation, sit, patted, a
-  pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
+  them apart), frame selection (walk-cycle animation, sit, lie down, patted,
+  a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
   particles, a tiny synthesized purr via the Web Audio API, the per-cat
   hover menu (pause/clipboard/closet/toybox, arranged on a half-circle via
   a `--dx`/`--dy` CSS custom property per button), the HTML5 drag-and-drop
@@ -107,8 +111,11 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   playful-mode mess-dropping on a randomized cooldown. While perched, a
   cat tracks its window's element directly (`offsetLeft`/`offsetTop`) every
   frame so dragging the window carries the cat with it. Cursor reaction is
-  approximated by having an idle/sitting cat turn to face the cursor when
-  it comes close.
+  approximated by having a standing-still (idle) cat turn to face the
+  cursor when it comes close; once settled into a sit or a lie-down, that
+  facing is locked in place instead of being re-evaluated against the
+  cursor every frame, which is what used to make a stationary cat flicker
+  left/right as the mouse passed near it.
 - `js/streak.js` — streak, unlock, and settings persistence (`localStorage`),
   including the day-advance debug helpers used by the Streak tab's demo
   tools.

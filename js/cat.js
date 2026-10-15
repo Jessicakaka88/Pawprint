@@ -747,16 +747,21 @@ class Cat {
       const targetX = 50 + Math.random() * Math.max(10, window.innerWidth - 120);
       this.queue.push({ type: "walk", x: targetX, footY: groundY });
       this.queue.push({ type: "idle", ms: 900 + Math.random() * 2200 });
-    } else {
+    } else if (roll < 0.93) {
       this.queue.push({ type: "sit", ms: 2000 + Math.random() * 2000 });
+      this.queue.push({ type: "idle", ms: 400 });
+    } else {
+      this.queue.push({ type: "lie", ms: 3000 + Math.random() * 3000 });
       this.queue.push({ type: "idle", ms: 400 });
     }
   }
 
   _updateCursorGlance() {
-    // When idle/sitting still, turn to face the cursor if it comes close —
-    // a lightweight stand-in for live eye/ear tracking.
-    if (this.state !== "idle" && this.state !== "sit") return;
+    // Only an idle (standing-still, not yet settled) cat glances toward the
+    // cursor — a lightweight stand-in for live eye/ear tracking. A sitting
+    // or lying cat keeps the facing it settled into, so it doesn't flicker
+    // left/right while holding still.
+    if (this.state !== "idle") return;
     const headX = this.x, headY = this.footY - 60;
     const dist = Math.hypot(CatMouse.x - headX, CatMouse.y - headY);
     if (dist < 190 && Math.abs(CatMouse.x - headX) > 18) {
@@ -873,6 +878,9 @@ class Cat {
         }
       }
       if (now - this.stepStart >= step.ms) this.currentStep = null;
+    } else if (step.type === "lie") {
+      this.state = "lying";
+      if (now - this.stepStart >= step.ms) this.currentStep = null;
     } else if (step.type === "idle") {
       this.state = "idle";
       if (now - this.stepStart >= step.ms) this.currentStep = null;
@@ -931,7 +939,7 @@ class Cat {
   _currentFrame(now) {
     const palette = this.def.palette;
     if (this.state === "patted") {
-      return { name: SPRITEART.FRAME_NAMES.sitFront, anchorKey: "sit_front", ...SPRITEART.sitSize() };
+      return { name: SPRITEART.FRAME_NAMES.sitFront, anchorKey: "sit_front", ...SPRITEART.sitFrontSize() };
     }
     if (this.dragging) {
       const frames = SPRITEART.FRAME_NAMES.dangle;
@@ -944,6 +952,11 @@ class Cat {
       const anchorKey = this.facing === 1 ? "walk_r" : "walk_l";
       const idx = Math.floor(now / 110) % frames.length;
       return { name: frames[idx], anchorKey, ...SPRITEART.walkSize() };
+    }
+    if (this.state === "lying") {
+      const anchorKey = this.facing === 1 ? "lie_r" : "lie_l";
+      const name = this.facing === 1 ? SPRITEART.FRAME_NAMES.lieR : SPRITEART.FRAME_NAMES.lieL;
+      return { name, anchorKey, ...SPRITEART.lieSize() };
     }
     // idle / sit
     const anchorKey = this.facing === 1 ? "sit_r" : "sit_l";

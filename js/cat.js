@@ -815,6 +815,7 @@ class Cat {
     this._wasFrozen = false;
 
     this._updateCursorGlance();
+    this._maybeDropMess(settings, now);
 
     if (!this.currentStep) {
       if (this.queue.length === 0) this._planNext();
@@ -860,7 +861,6 @@ class Cat {
           this.footY += (dyw / dist) * move;
           if (Math.abs(dxw) >= Math.abs(dyw)) {
             this._maybeStampPaw(settings);
-            this._maybeDropMess(settings, now);
           }
         }
       }
@@ -910,22 +910,28 @@ class Cat {
     setTimeout(() => print.remove(), 3000);
   }
 
-  // Playful mode: every so often while wandering the floor, leave a little
-  // mess behind — click it to pick it up.
+  // Playful mode: every so often, leave a little mess somewhere on the
+  // desktop — click it to pick it up. On a long, randomized cooldown (a
+  // few minutes) so they don't pile up fast, and scattered anywhere on
+  // screen rather than only underfoot where the cat happens to be walking.
   _maybeDropMess(settings, now) {
     if (!settings.playful) return;
-    if (Math.abs(this.footY - this.groundFootY()) > 4) return; // only on the floor
-    if (this._nextMessAt == null) this._nextMessAt = now + 6000 + Math.random() * 6000;
+    if (this._nextMessAt == null) this._nextMessAt = now + 120000 + Math.random() * 180000; // first one 2-5 min in
     if (now < this._nextMessAt) return;
-    this._nextMessAt = now + 12000 + Math.random() * 14000;
+    this._nextMessAt = now + 120000 + Math.random() * 180000; // every 2-5 min thereafter
 
     const glyphs = ["💩", "💩", "🧶", "🐭", "🪶"]; // poop shows up a bit more often than toys
     const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
     const mess = document.createElement("div");
     mess.className = "mess-item";
     mess.textContent = glyph;
-    mess.style.left = (this.x - 13 + (Math.random() * 10 - 5)) + "px";
-    mess.style.top = (this.footY - 26) + "px";
+    // Anywhere on the desktop, clear of the menu bar up top and the dock
+    // down below, instead of always hugging the floor line.
+    const margin = 20;
+    const mx = margin + Math.random() * (window.innerWidth - margin * 2);
+    const my = 50 + Math.random() * (window.innerHeight - 140);
+    mess.style.left = (mx - 13) + "px";
+    mess.style.top = (my - 13) + "px";
     mess.title = "Click to pick up";
     mess.addEventListener("click", () => {
       if (mess.classList.contains("picked-up")) return;

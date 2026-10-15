@@ -68,9 +68,9 @@ Opening `index.html` directly via `file://` also works.
     can preview the reward loop without waiting on real calendar days.
   - **Settings** — hide all cats, pause movement & interactions globally,
     toggle purring sound / paw prints, and switch **Playful mode** on:
-    cats then leave toys and little messes behind as they wander the floor
-    (on a random cooldown) — click one to pick it up. **Serious mode**
-    (the default) keeps cats just walking around, mess-free.
+    every so often (every 2–5 minutes, so they never pile up fast) a little
+    toy or mess appears somewhere on the desktop — click one to pick it up.
+    **Serious mode** (the default) keeps cats just walking around, mess-free.
 - **Drag the fake windows** by their title bars — cats treat them as real
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
@@ -108,7 +108,9 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   "clipboard" (native `dragover`/`drop` to save a file or dragged text,
   `DownloadURL`/Clipboard API to take it back out), the toy box ("playing"
   freezes the cat next to an animated toy sprite until called back), and
-  playful-mode mess-dropping on a randomized cooldown. While perched, a
+  playful-mode mess-dropping on a randomized multi-minute cooldown, scattered
+  anywhere on the desktop rather than tied to wherever the cat is standing.
+  While perched, a
   cat tracks its window's element directly (`offsetLeft`/`offsetTop`) every
   frame so dragging the window carries the cat with it. Cursor reaction is
   approximated by having a standing-still (idle) cat turn to face the

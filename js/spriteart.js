@@ -14,7 +14,7 @@ const SPRITEART = (() => {
   const DIMS = {
     sit: { w: 202, h: 157 },
     sitFront: { w: 177, h: 189 }, // front-facing "patted" pose — its own older canvas, untouched by the sit_l/sit_r art swap
-    walk: { w: 223, h: 159 }, // walk_l and walk_r share this padded size
+    walk: { w: 302, h: 256 }, // walk_l and walk_r share this padded size
     dangle: { w: 158, h: 290 }, // lifted by the scruff; all swing frames share this canvas
     lie: { w: 218, h: 135 }, // lying down, resting on the floor
   };
@@ -25,8 +25,8 @@ const SPRITEART = (() => {
     sitL: "sit_l",
     lieR: "lie_r",
     lieL: "lie_l",
-    walkR: Array.from({ length: 6 }, (_, i) => `walk_r_${i + 1}`),
-    walkL: Array.from({ length: 6 }, (_, i) => `walk_l_${i + 1}`),
+    walkR: Array.from({ length: 4 }, (_, i) => `walk_r_${i + 1}`),
+    walkL: Array.from({ length: 4 }, (_, i) => `walk_l_${i + 1}`),
     // Lifted by the scruff, limbs dangling. Ordered from limbs swung far
     // left to far right; index 2 hangs straight down.
     dangle: ["dangle_l2", "dangle_l1", "dangle", "dangle_r1", "dangle_r2"],
@@ -39,8 +39,8 @@ const SPRITEART = (() => {
   // Approximate accessory anchor points (ratio of frame width/height, from
   // top-left) for each facing/pose, hand-picked by eyeballing the art.
   const ANCHORS = {
-    walk_r: { head: { x: 0.76, y: 0.0 }, neck: { x: 0.64, y: 0.56 }, feet: { x: 0.58, y: 0.97 } },
-    walk_l: { head: { x: 0.24, y: 0.0 }, neck: { x: 0.36, y: 0.56 }, feet: { x: 0.42, y: 0.97 } },
+    walk_r: { head: { x: 0.78, y: 0.03 }, neck: { x: 0.66, y: 0.43 }, feet: { x: 0.79, y: 0.9 } },
+    walk_l: { head: { x: 0.22, y: 0.03 }, neck: { x: 0.34, y: 0.43 }, feet: { x: 0.21, y: 0.9 } },
     sit_r: { head: { x: 0.79, y: 0.0 }, neck: { x: 0.68, y: 0.32 }, feet: { x: 0.65, y: 0.88 } },
     sit_l: { head: { x: 0.21, y: 0.0 }, neck: { x: 0.32, y: 0.32 }, feet: { x: 0.35, y: 0.88 } },
     sit_front: { head: { x: 0.5, y: 0.0 }, neck: { x: 0.5, y: 0.6 }, feet: { x: 0.5, y: 0.97 } },

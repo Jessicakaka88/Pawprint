@@ -9,6 +9,11 @@
 const SPRITEART = (() => {
   const PALETTE_KEYS = ["shadow", "mochi", "snowy", "celestial"];
   const DISPLAY_SCALE = 0.52;
+  // The walk reference sheet was drawn at a noticeably higher pixel density
+  // than the others, so it needs its own (smaller) scale to come out the
+  // same on-screen size as the rest of the cat's poses instead of looming
+  // over them mid-stride.
+  const WALK_DISPLAY_SCALE = 0.32;
 
   // Pixel dimensions of each pose group's shared frame canvas (see assets/cats/manifest.json).
   const DIMS = {
@@ -74,7 +79,7 @@ const SPRITEART = (() => {
 
   function sitSize() { return { w: DIMS.sit.w * DISPLAY_SCALE, h: DIMS.sit.h * DISPLAY_SCALE }; }
   function sitFrontSize() { return { w: DIMS.sitFront.w * DISPLAY_SCALE, h: DIMS.sitFront.h * DISPLAY_SCALE }; }
-  function walkSize() { return { w: DIMS.walk.w * DISPLAY_SCALE, h: DIMS.walk.h * DISPLAY_SCALE }; }
+  function walkSize() { return { w: DIMS.walk.w * WALK_DISPLAY_SCALE, h: DIMS.walk.h * WALK_DISPLAY_SCALE }; }
   function dangleSize() { return { w: DIMS.dangle.w * DISPLAY_SCALE, h: DIMS.dangle.h * DISPLAY_SCALE }; }
   function lieSize() { return { w: DIMS.lie.w * DISPLAY_SCALE, h: DIMS.lie.h * DISPLAY_SCALE }; }
 

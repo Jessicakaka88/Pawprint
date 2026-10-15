@@ -243,6 +243,18 @@ html, body {
   20%  { opacity: 1; }
   100% { opacity: 0; transform: translate(-50%, -34px) rotate(90deg) scale(1); }
 }
+.zzz-particle {
+  position: absolute;
+  line-height: 0;
+  image-rendering: pixelated;
+  pointer-events: none;
+  animation: zzz-float 2.3s ease-out forwards;
+}
+@keyframes zzz-float {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.7); }
+  15%  { opacity: 0.95; }
+  100% { opacity: 0; transform: translate(10%, -38px) scale(1.4); }
+}
 
 /* ---------- Dock ---------- */
 #dock {

@@ -26,18 +26,21 @@ Opening `index.html` directly via `file://` also works.
 - **Watch a cat live on the desktop.** It wanders the "desktop," occasionally
   climbs up and rests on top of one of the fake app windows (Finder/Notes)
   for a random 5–10 seconds, then climbs back down, or settles on the floor
-  to sit (always for 3+ seconds) or lie down for a stretch — always facing
-  the same way it was just walking, never the opposite direction, and never
-  sitting right after another sit (it'll walk or lie down instead). Drag the
-  window it's sitting on — the cat rides along, rigidly tracking the
-  window's position, and hops off onto the floor if that window closes out
-  from under it. Move your mouse near a cat that's just standing still
-  (idle) and it glances to face the cursor; once it's settled into a sit or
-  a lie-down it holds that facing steady instead of flicking back and forth
-  as the cursor passes by.
+  to sit (always for 3+ seconds) or lie down for a longer stretch (10–30
+  seconds, with a little pixel-art "Z" drifting up from its head every so
+  often while it dozes) — always facing the same way it was just walking,
+  never the opposite direction, and never sitting right after another sit
+  (it'll walk or lie down instead). Drag the window it's sitting on — the
+  cat rides along, rigidly tracking the window's position, and hops off onto
+  the floor if that window closes out from under it. Move your mouse near a
+  cat that's just standing still (idle) and it glances to face the cursor;
+  once it's settled into a sit or a lie-down it holds that facing steady
+  instead of flicking back and forth as the cursor passes by.
 - **Pat it.** Click/tap the cat for a quick pat: it purrs (synthesized sound,
   toggleable), squints happily, and a pixel-art heart floats up. This also
-  records today's care streak.
+  records today's care streak, and hides its hover-menu buttons the same way
+  a click/drag does — they only come back the next time you actually hover
+  over the cat again.
 - **Drag it.** Press and drag the cat (hovering alone never starts a drag) —
   it hangs by the scruff with its limbs swinging like a pendulum opposite
   your cursor's motion, and snaps onto whichever window is nearest when you
@@ -61,8 +64,10 @@ Opening `index.html` directly via `file://` also works.
   - **🧸** opens that cat's toy box. Tap an unlocked toy to send the cat over
     to play with it (it sits and wiggles the toy in place); tap 🧸 again to
     call the cat back — the toy stays behind on the desk, left out.
-  - Clicking or starting to drag the cat immediately clears all of these
-    out of the way instead of leaving them floating mid-interaction.
+  - Clicking (to pat) or starting to drag the cat immediately clears all of
+    these out of the way instead of leaving them floating mid-interaction —
+    a pat keeps them hidden until you hover again, while dropping a drag
+    brings the menu right back since the cursor's still on the cat.
 - **Open the full control panel** — now a normal floating, draggable app
   window (traffic-light title bar, centered on first open, remembers where
   you last dragged it) via the dock's paw icon:

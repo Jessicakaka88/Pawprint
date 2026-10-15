@@ -39,6 +39,30 @@ const PIXEL_HEART_SVG = (() => {
   return `<svg viewBox="0 0 13 11" width="26" height="22" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
 })();
 
+// Pixel-art "Z" shown drifting up from a resting cat's head while it's lying down.
+const PIXEL_Z_SVG = (() => {
+  const g = [
+    "XXXXXXX",
+    ".....X.",
+    "....X..",
+    "...X...",
+    "..X....",
+    ".X.....",
+    "XXXXXXX",
+  ];
+  const on = (r, c) => r >= 0 && r < g.length && c >= 0 && c < 7 && g[r][c] === "X";
+  let rects = "";
+  for (let r = 0; r < g.length; r++) {
+    for (let c = 0; c < 7; c++) {
+      if (!on(r, c)) continue;
+      let col = "#9fc3e8"; // fill — soft, sleepy blue
+      if (!on(r - 1, c) || !on(r + 1, c) || !on(r, c - 1) || !on(r, c + 1)) col = "#3c5a78"; // outline
+      rects += `<rect x="${c}" y="${r}" width="1" height="1" fill="${col}"/>`;
+    }
+  }
+  return `<svg viewBox="0 0 7 7" width="14" height="14" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
+})();
+
 let sharedAudioCtx = null;
 function playPurr() {
   try {
@@ -167,14 +191,17 @@ class Cat {
       if (downX == null) return;
       const elapsed = performance.now() - downT;
       if (!movedFar && elapsed < 350) {
+        // A pat keeps the menu hidden even though the cursor is still
+        // sitting on the cat — it only comes back the next time you
+        // actually hover again (mouse leaves and re-enters).
         this.pat();
       } else if (movedFar) {
         this._endDrag();
+        // The cursor just dropped the cat and is still over it — bring the
+        // hover menu back.
+        this._hoverShow();
       }
       downX = null;
-      // The cursor is still over the cat (or just dropped it) — bring the
-      // hover menu back.
-      this._hoverShow();
     };
     this.el.addEventListener("pointerup", finish);
     this.el.addEventListener("pointercancel", finish);
@@ -724,6 +751,27 @@ class Cat {
     }
   }
 
+  // While lying down, drift a little pixel-art "Z" up from its head every so
+  // often, like it's dozing off. Timed off the current step object so each
+  // fresh lie-down starts its own cycle instead of carrying over a stale one.
+  _maybeSpawnZzz(now) {
+    const step = this.currentStep;
+    if (step._nextZzzAt == null) step._nextZzzAt = now + 400;
+    if (now < step._nextZzzAt) return;
+    step._nextZzzAt = now + 1600 + Math.random() * 900;
+
+    const { w, h } = SPRITEART.lieSize();
+    const headX = this.x + (this.facing === 1 ? w * 0.3 : -w * 0.3);
+    const headY = this.footY - h * 0.92;
+    const el = document.createElement("div");
+    el.className = "zzz-particle";
+    el.innerHTML = PIXEL_Z_SVG;
+    el.style.left = Math.round(headX) + "px";
+    el.style.top = Math.round(headY) + "px";
+    document.getElementById("cats-layer").appendChild(el);
+    setTimeout(() => el.remove(), 2300);
+  }
+
   _planNext() {
     const groundY = this.groundFootY();
     const rects = this.world.getWindowRects();
@@ -760,7 +808,7 @@ class Cat {
       this.queue.push({ type: "idle", ms: 400 });
       this._lastPlannedType = "sit";
     } else {
-      this.queue.push({ type: "lie", ms: 3000 + Math.random() * 3000 });
+      this.queue.push({ type: "lie", ms: 10000 + Math.random() * 20000 });
       this.queue.push({ type: "idle", ms: 400 });
       this._lastPlannedType = "lie";
     }
@@ -914,6 +962,7 @@ class Cat {
     } else if (step.type === "lie") {
       this.state = "lying";
       this.facing = this.lastWalkFacing; // match the way it was just walking, not a stray cursor glance
+      this._maybeSpawnZzz(now);
       if (now - this.stepStart >= step.ms) this.currentStep = null;
     } else if (step.type === "idle") {
       this.state = "idle";

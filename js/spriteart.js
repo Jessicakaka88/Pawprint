@@ -14,6 +14,11 @@ const SPRITEART = (() => {
   // same on-screen size as the rest of the cat's poses instead of looming
   // over them mid-stride.
   const WALK_DISPLAY_SCALE = 0.32;
+  // The sit art reads visually larger than the walk art even at a matched
+  // bounding-box height, because a sitting cat is a dense round shape that
+  // fills its box while a walking cat is a leaner, thinner silhouette — so
+  // sit gets its own, smaller scale to look the same size next to it.
+  const SIT_DISPLAY_SCALE = 0.44;
 
   // Pixel dimensions of each pose group's shared frame canvas (see assets/cats/manifest.json).
   const DIMS = {
@@ -77,7 +82,7 @@ const SPRITEART = (() => {
     return p[frameName] || p[FRAME_NAMES.sitFront];
   }
 
-  function sitSize() { return { w: DIMS.sit.w * DISPLAY_SCALE, h: DIMS.sit.h * DISPLAY_SCALE }; }
+  function sitSize() { return { w: DIMS.sit.w * SIT_DISPLAY_SCALE, h: DIMS.sit.h * SIT_DISPLAY_SCALE }; }
   function sitFrontSize() { return { w: DIMS.sitFront.w * DISPLAY_SCALE, h: DIMS.sitFront.h * DISPLAY_SCALE }; }
   function walkSize() { return { w: DIMS.walk.w * WALK_DISPLAY_SCALE, h: DIMS.walk.h * WALK_DISPLAY_SCALE }; }
   function dangleSize() { return { w: DIMS.dangle.w * DISPLAY_SCALE, h: DIMS.dangle.h * DISPLAY_SCALE }; }

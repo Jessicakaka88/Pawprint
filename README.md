@@ -48,10 +48,11 @@ Opening `index.html` directly via `file://` also works.
   let go (no need for a precise drop), or the floor if nothing's close by.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints,
   rotated to point the way it's heading, that fade out after a few seconds.
-- **Hover over a cat** — four buttons "zoom out" into a half-circle arc above
-  its head. Hovering just freezes the cat exactly as it is — mid-stride,
-  sitting, lying down, whatever it was doing — so the buttons aren't a
-  moving target, without snapping it into a sit first.
+- **Hover over a cat** — five buttons "zoom out" into a half-circle arc above
+  its head. Hovering, and clicking any of these buttons, just freezes the
+  cat exactly as it is — mid-stride, sitting, lying down, whatever it was
+  doing — so the buttons aren't a moving target, without snapping it into a
+  sit first.
   - **⏸/▶** pauses or resumes just that cat's movement (still pettable and
     draggable while paused) — this one does sit it upright and hold still,
     not just freeze mid-stride, since pausing is a deliberate "stop" rather
@@ -65,6 +66,9 @@ Opening `index.html` directly via `file://` also works.
   - **🧸** opens that cat's toy box. Tap an unlocked toy to send the cat over
     to play with it (it sits and wiggles the toy in place); tap 🧸 again to
     call the cat back — the toy stays behind on the desk, left out.
+  - **🍗** feeds the cat — it sits and eats for a few seconds. Only a cat
+    that's actually been fed leaves a poop behind, roughly a minute later
+    (Playful mode only); a cat that's never fed never poops.
   - Clicking (to pat) or starting to drag the cat immediately clears all of
     these out of the way instead of leaving them floating mid-interaction —
     a pat keeps them hidden until you hover again, while dropping a drag
@@ -78,10 +82,12 @@ Opening `index.html` directly via `file://` also works.
     **prototype demo tools** to simulate the next day or a missed day so you
     can preview the reward loop without waiting on real calendar days.
   - **Settings** — hide all cats, pause movement & interactions globally,
-    toggle purring sound / paw prints, and switch **Playful mode** on:
-    every so often (every 2–5 minutes, so they never pile up fast) a little
-    toy or mess appears somewhere on the desktop — click one to pick it up.
-    **Serious mode** (the default) keeps cats just walking around, mess-free.
+    toggle purring sound / paw prints, and switch **Playful mode** on: every
+    so often while a cat is out walking, it grabs one of its unlocked toys
+    and carries it around in its mouth, playing with it for 10–20 seconds,
+    then leaves it behind wherever it ends up — never just teleported to a
+    random spot. **Serious mode** (the default) keeps cats just walking
+    around, mess-free (feeding still works, but nothing gets left behind).
 - **Drag the fake windows** by their title bars — cats treat them as real
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
@@ -114,14 +120,16 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   them apart), frame selection (walk-cycle animation, sit, lie down, patted,
   a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
   particles, a tiny synthesized purr via the Web Audio API, the per-cat
-  hover menu (pause/clipboard/closet/toybox, arranged on a half-circle via
-  a `--dx`/`--dy` CSS custom property per button), the HTML5 drag-and-drop
+  hover menu (pause/clipboard/closet/toybox/food, arranged on a half-circle
+  via a `--dx`/`--dy` CSS custom property per button), the HTML5 drag-and-drop
   "clipboard" (native `dragover`/`drop` to save a file or dragged text,
   `DownloadURL`/Clipboard API to take it back out), the toy box ("playing"
-  freezes the cat next to an animated toy sprite until called back), and
-  playful-mode mess-dropping on a randomized multi-minute cooldown, scattered
-  anywhere on the desktop rather than tied to wherever the cat is standing.
-  While perched, a
+  freezes the cat next to an animated toy sprite until called back), feeding
+  (sits and "eats" for a few seconds, then schedules a one-off poop roughly a
+  minute later — never if it wasn't fed), and playful-mode toy-carrying: a
+  walking cat occasionally grabs an unlocked toy, follows it along near its
+  mouth for 10-20s, then leaves it behind as a normal pick-up-able item right
+  where the cat ends up. While perched, a
   cat tracks its window's element directly (`offsetLeft`/`offsetTop`) every
   frame so dragging the window carries the cat with it. Cursor reaction is
   approximated by having a standing-still (idle) cat turn to face the

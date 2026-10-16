@@ -63,6 +63,8 @@ const PIXEL_Z_SVG = (() => {
   return `<svg viewBox="0 0 7 7" width="10" height="10" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
 })();
 
+const FOOD_GLYPH = "🍗"; // what appears when you feed a cat from the hover menu
+
 let sharedAudioCtx = null;
 function playPurr() {
   try {
@@ -122,6 +124,14 @@ class Cat {
     this.playing = false;          // actively playing with a toy (frozen, animated)
     this.activeToyId = null;
     this.activeToyEl = null;       // the toy sprite on the desk — stays after play ends ("left out")
+    this.carryingToyId = null;     // a toy it's carrying around in its mouth while wandering
+    this.carryToyEl = null;
+    this._carryUntil = 0;
+    this._nextCarryAt = null;
+    this.eating = false;           // sat down and eating fed food (frozen, animated)
+    this.eatingEl = null;
+    this._eatUntil = 0;
+    this._poopAt = null;           // when a poop should appear, set only after a feeding
     this._hoverHideTimer = null;
     this._wasFrozen = false;       // edge-detects entering a hard-paused (sit-snap) state
     this._wasHoverFrozen = false;  // edge-detects entering a hover freeze (no pose change)
@@ -320,13 +330,19 @@ class Cat {
     toyBtn.title = "Toy box";
     toyBtn.textContent = "🧸";
 
-    [pauseBtn, clipBtn, closetBtn, toyBtn].forEach((btn) => menu.appendChild(btn));
+    const foodBtn = document.createElement("button");
+    foodBtn.className = "cat-hover-btn cat-hover-food";
+    foodBtn.type = "button";
+    foodBtn.title = "Feed this cat";
+    foodBtn.textContent = "🍗";
+
+    [pauseBtn, clipBtn, closetBtn, toyBtn, foodBtn].forEach((btn) => menu.appendChild(btn));
     document.getElementById("cats-layer").appendChild(menu);
 
     // Half-circle arc above the cat; each button gets a fixed (--dx, --dy)
     // offset from the arc's center, animated to on hover ("zoom out" reveal).
     const radius = 62;
-    [[160, pauseBtn], [113, clipBtn], [67, closetBtn], [20, toyBtn]].forEach(([angleDeg, btn]) => {
+    [[160, pauseBtn], [125, clipBtn], [90, closetBtn], [55, toyBtn], [20, foodBtn]].forEach(([angleDeg, btn]) => {
       const rad = (angleDeg * Math.PI) / 180;
       btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
       btn.style.setProperty("--dy", (-radius * Math.sin(rad)).toFixed(1) + "px");
@@ -360,6 +376,12 @@ class Cat {
       else this._toggleToyboxPanel();
     });
 
+    foodBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
+    foodBtn.addEventListener("click", (e) => {
+      e.stopPropagation();
+      this._feed();
+    });
+
     // Hovering the cat (or its menu/clipboard panel) holds it still so the
     // buttons don't drift out from under the cursor while you're using them.
     const show = () => {
@@ -384,6 +406,7 @@ class Cat {
     this.hoverClipBtn = clipBtn;
     this.hoverClosetBtn = closetBtn;
     this.hoverToyBtn = toyBtn;
+    this.hoverFoodBtn = foodBtn;
     this._hoverShow = show;
     this._hoverScheduleHide = scheduleHide;
   }
@@ -637,6 +660,8 @@ class Cat {
 
   _startPlay(toyId) {
     if (this.dragging) return;
+    if (this.carryingToyId) this._dropCarriedToy();
+    if (this.eating) this._finishEating();
     this._removeActiveToy();
     this.playing = true;
     this.activeToyId = toyId;
@@ -671,7 +696,107 @@ class Cat {
     if (this.activeToyEl) { this.activeToyEl.remove(); this.activeToyEl = null; }
   }
 
+  // Playful mode: every so often while it's actually out walking, the cat
+  // grabs one of its unlocked toys and carries it around in its mouth for
+  // 10-20s before leaving it behind wherever it happens to be — never just
+  // dropped at a random spot with no play first.
+  _maybeStartCarryingToy(settings, now) {
+    if (this.carryingToyId) {
+      if (now >= this._carryUntil) this._dropCarriedToy();
+      return;
+    }
+    if (!settings.playful || this.playing || this.eating) return;
+    const unlocked = this.world.getUnlockedToys() || [];
+    if (!unlocked.length) return;
+    if (this._nextCarryAt == null) this._nextCarryAt = now + 30000 + Math.random() * 60000; // first chance 30-90s in
+    if (now < this._nextCarryAt) return;
+    if (this.state !== "walk") return; // wait until it's genuinely out walking around
+    this._nextCarryAt = now + 60000 + Math.random() * 120000; // next chance 1-3 min later
+
+    this.carryingToyId = unlocked[Math.floor(Math.random() * unlocked.length)];
+    this._carryUntil = now + 10000 + Math.random() * 10000; // carry/play with it for 10-20s
+    const el = document.createElement("div");
+    el.className = "active-toy playing";
+    el.textContent = TOYS[this.carryingToyId].glyph;
+    document.getElementById("cats-layer").appendChild(el);
+    this.carryToyEl = el;
+  }
+
+  // Leaves the carried toy behind right where the cat currently is, as a
+  // normal pick-up-able mess item, instead of teleporting it anywhere.
+  _dropCarriedToy() {
+    const toyId = this.carryingToyId;
+    if (!toyId) return;
+    this.carryingToyId = null;
+    if (this.carryToyEl) { this.carryToyEl.remove(); this.carryToyEl = null; }
+    this._spawnMessItem(TOYS[toyId].glyph, this.x, this.footY - 24, "Picked up a toy left behind 🧸");
+  }
+
+  // Feeding this cat (🍗 hover-menu button) sits it down to eat; only a cat
+  // that's actually eaten will leave a poop behind, about a minute later.
+  _feed() {
+    if (this.dragging || this.eating) return;
+    if (this.carryingToyId) this._dropCarriedToy();
+    if (this.playing) this._endPlay();
+    this.eating = true;
+    this.state = "sit";
+    this.queue = [];
+    this.currentStep = null;
+    this._eatUntil = performance.now() + 2600;
+    this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
+    this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
+    this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+
+    const el = document.createElement("div");
+    el.className = "active-toy playing";
+    el.textContent = FOOD_GLYPH;
+    document.getElementById("cats-layer").appendChild(el);
+    this.eatingEl = el;
+    this.hoverFoodBtn.classList.add("active");
+  }
+
+  _finishEating() {
+    if (!this.eating) return;
+    this.eating = false;
+    if (this.eatingEl) { this.eatingEl.remove(); this.eatingEl = null; }
+    this.hoverFoodBtn.classList.remove("active");
+    this.currentStep = { type: "idle", ms: 300 };
+    this._poopAt = performance.now() + 60000 + Math.random() * 30000; // shows up roughly a minute later
+  }
+
+  // Only ever fires after a feeding scheduled it — a cat that was never fed
+  // never poops.
+  _maybeDropPoop(settings, now) {
+    if (this._poopAt == null || now < this._poopAt) return;
+    this._poopAt = null;
+    if (!settings.playful) return; // Serious mode stays mess-free even after a feeding
+    const margin = 20;
+    const mx = margin + Math.random() * (window.innerWidth - margin * 2);
+    const my = 50 + Math.random() * (window.innerHeight - 140);
+    this._spawnMessItem("💩", mx, my, "Cleaned up after your cat 🧹");
+  }
+
+  // Shared "left behind, click to pick up" item — used for a dropped toy
+  // and for a post-meal poop alike.
+  _spawnMessItem(glyph, x, y, pickedUpMessage) {
+    const mess = document.createElement("div");
+    mess.className = "mess-item";
+    mess.textContent = glyph;
+    mess.style.left = (x - 13) + "px";
+    mess.style.top = (y - 13) + "px";
+    mess.title = "Click to pick up";
+    mess.addEventListener("click", () => {
+      if (mess.classList.contains("picked-up")) return;
+      mess.classList.add("picked-up");
+      this.world.toast(pickedUpMessage, { icon: "✨" });
+      setTimeout(() => mess.remove(), 350);
+    });
+    document.getElementById("mess-layer").appendChild(mess);
+    return mess;
+  }
+
   _startDrag() {
+    if (this.carryingToyId) this._dropCarriedToy();
     this.dragging = true;
     this.state = "dragged";
     this.dragSwing = 0; this.dragVX = 0; this.dragVY = 0;
@@ -871,11 +996,18 @@ class Cat {
       return;
     }
 
-    // An explicit pause (the pause button, the global setting) or an open
-    // panel/toy session stops the cat and sits it upright, since those are
-    // deliberate "stop and let me interact" actions.
-    const hardPause = settings.paused || this.manuallyPaused || this.playing
-      || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen;
+    if (this.eating) {
+      if (now >= this._eatUntil) this._finishEating();
+      this._render(now);
+      return;
+    }
+
+    // Only the pause button and the global setting are a deliberate "stop"
+    // command that sits the cat upright. Playing with a toy and eating also
+    // sit it (that's the point of those), but everything reached by
+    // clicking a hover-menu button while hovering — opening a panel
+    // included — should leave it exactly as it already was.
+    const hardPause = settings.paused || this.manuallyPaused || this.playing;
     if (hardPause) {
       this._wasHoverFrozen = false; // let a later hover re-capture its own freeze frame
       if (!this._wasFrozen) {
@@ -891,11 +1023,13 @@ class Cat {
     }
     this._wasFrozen = false;
 
-    // Just hovering (to reach the hover menu) is not a "stop and sit"
-    // command — it freezes the cat exactly where and as it is, walk-cycle
-    // frame included, by rendering with the instant hovering began instead
-    // of the live clock, rather than snapping it into a sit.
-    if (this.hoverPaused) {
+    // Just hovering (to reach the hover menu), or having clicked one of its
+    // buttons to open a panel, is not a "stop and sit" command — it freezes
+    // the cat exactly where and as it is, walk-cycle frame included, by
+    // rendering with the instant freezing began instead of the live clock,
+    // rather than snapping it into a sit.
+    const softFreeze = this.hoverPaused || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen;
+    if (softFreeze) {
       if (!this._wasHoverFrozen) {
         this._wasHoverFrozen = true;
         this._hoverFreezeNow = now;
@@ -906,7 +1040,8 @@ class Cat {
     this._wasHoverFrozen = false;
 
     this._updateCursorGlance();
-    this._maybeDropMess(settings, now);
+    this._maybeStartCarryingToy(settings, now);
+    this._maybeDropPoop(settings, now);
 
     if (!this.currentStep) {
       if (this.queue.length === 0) this._planNext();
@@ -1008,38 +1143,6 @@ class Cat {
     setTimeout(() => print.remove(), 3000);
   }
 
-  // Playful mode: every so often, leave a little mess somewhere on the
-  // desktop — click it to pick it up. On a long, randomized cooldown (a
-  // few minutes) so they don't pile up fast, and scattered anywhere on
-  // screen rather than only underfoot where the cat happens to be walking.
-  _maybeDropMess(settings, now) {
-    if (!settings.playful) return;
-    if (this._nextMessAt == null) this._nextMessAt = now + 120000 + Math.random() * 180000; // first one 2-5 min in
-    if (now < this._nextMessAt) return;
-    this._nextMessAt = now + 120000 + Math.random() * 180000; // every 2-5 min thereafter
-
-    const glyphs = ["💩", "💩", "🧶", "🐭", "🪶"]; // poop shows up a bit more often than toys
-    const glyph = glyphs[Math.floor(Math.random() * glyphs.length)];
-    const mess = document.createElement("div");
-    mess.className = "mess-item";
-    mess.textContent = glyph;
-    // Anywhere on the desktop, clear of the menu bar up top and the dock
-    // down below, instead of always hugging the floor line.
-    const margin = 20;
-    const mx = margin + Math.random() * (window.innerWidth - margin * 2);
-    const my = 50 + Math.random() * (window.innerHeight - 140);
-    mess.style.left = (mx - 13) + "px";
-    mess.style.top = (my - 13) + "px";
-    mess.title = "Click to pick up";
-    mess.addEventListener("click", () => {
-      if (mess.classList.contains("picked-up")) return;
-      mess.classList.add("picked-up");
-      this.world.toast(glyph === "💩" ? "Cleaned up after your cat 🧹" : "Picked up a toy left behind 🧸", { icon: "✨" });
-      setTimeout(() => mess.remove(), 350);
-    });
-    document.getElementById("mess-layer").appendChild(mess);
-  }
-
   _currentFrame(now) {
     const palette = this.def.palette;
     if (this.state === "patted") {
@@ -1139,6 +1242,21 @@ class Cat {
       this.activeToyEl.style.left = Math.round(toyX - 11) + "px";
       this.activeToyEl.style.top = Math.round(this.footY - 24) + "px";
     }
+
+    // A carried toy rides along near its mouth as it wanders around with it.
+    if (this.carryToyEl) {
+      const mouthX = this.x + (this.facing === 1 ? SPRITEART.sitSize().w * 0.3 : -SPRITEART.sitSize().w * 0.3);
+      this.carryToyEl.style.left = Math.round(mouthX - 11) + "px";
+      this.carryToyEl.style.top = Math.round(this.footY - SPRITEART.sitSize().h * 0.7) + "px";
+    }
+
+    // The food bowl sits on the ground in front of the cat's face while it
+    // eats, not tucked behind it near the tail.
+    if (this.eatingEl) {
+      const bowlX = this.x + (this.facing === 1 ? frame.w * 0.5 : -frame.w * 0.5);
+      this.eatingEl.style.left = Math.round(bowlX - 11) + "px";
+      this.eatingEl.style.top = Math.round(this.footY - 24) + "px";
+    }
   }
 
   _renderAccessories(frame) {
@@ -1174,6 +1292,8 @@ class Cat {
     this.clipboard.forEach((item) => { if (item.blobUrl) URL.revokeObjectURL(item.blobUrl); });
     clearTimeout(this._hoverHideTimer);
     this._removeActiveToy();
+    if (this.carryToyEl) this.carryToyEl.remove();
+    if (this.eatingEl) this.eatingEl.remove();
     this.hoverMenuEl.remove();
     this.clipboardPanelEl.remove();
     this.closetPanelEl.remove();

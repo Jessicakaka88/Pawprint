@@ -342,11 +342,12 @@ class Cat {
     // Two rows above the cat's head, each button getting a fixed (--dx,
     // --dy) offset from that point, animated to on hover ("zoom out"
     // reveal): closet/toybox/food along a curved bottom row (toybox lifted
-    // higher in the middle, like a shallow arc), pause/clipboard centered
-    // on a row well above them.
+    // higher in the middle, like a shallow arc), pause/clipboard on a row
+    // above them, sitting over the gaps between the bottom three rather
+    // than bunched together over the middle one.
     [
       [-44, -28, closetBtn], [0, -40, toyBtn], [44, -28, foodBtn],
-      [-22, -78, pauseBtn], [22, -78, clipBtn],
+      [-32, -78, pauseBtn], [32, -78, clipBtn],
     ].forEach(([dx, dy, btn]) => {
       btn.style.setProperty("--dx", dx + "px");
       btn.style.setProperty("--dy", dy + "px");

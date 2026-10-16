@@ -26,6 +26,15 @@ const TOYS = {
   feather: { name: "Feather Wand", glyph: "🪶" },
 };
 
+// Food lives in its own board (hover menu's 🍗 button). Drumstick is
+// available from day one; the rest unlock with the streak.
+const FOODS = {
+  drumstick: { name: "Drumstick", glyph: "🍗" },
+  fish: { name: "Fish", glyph: "🐟" },
+  can: { name: "Canned Food", glyph: "🥫" },
+  milk: { name: "Milk", glyph: "🥛" },
+};
+
 const CAT_CATALOG = [
   { id: "mochi", name: "Mochi", palette: "mochi", unlockDays: 0, blurb: "Your very first desk pet. Loves sunny windowsills." },
   { id: "shadow", name: "Shadow", palette: "shadow", unlockDays: 7, blurb: "A sleek night prowler, unlocked at a 7-day streak." },
@@ -49,6 +58,12 @@ const TOY_MILESTONES = [
   { id: "teddy", unlockDays: 35 },
 ];
 
+const FOOD_MILESTONES = [
+  { id: "fish", unlockDays: 8 },
+  { id: "can", unlockDays: 25 },
+  { id: "milk", unlockDays: 50 },
+];
+
 // Combined, sorted milestone timeline shown in the Streak tab.
 const MILESTONES = [
   ...CAT_CATALOG.filter(c => c.unlockDays > 0).map(c => ({
@@ -59,5 +74,8 @@ const MILESTONES = [
   })),
   ...TOY_MILESTONES.map(t => ({
     days: t.unlockDays, label: `Unlock ${TOYS[t.id].name} toy`, kind: "toy", refId: t.id,
+  })),
+  ...FOOD_MILESTONES.map(f => ({
+    days: f.unlockDays, label: `Unlock ${FOODS[f.id].name}`, kind: "food", refId: f.id,
   })),
 ].sort((a, b) => a.days - b.days);

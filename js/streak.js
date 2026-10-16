@@ -25,6 +25,7 @@ const StreakManager = (() => {
       activeCats: ["mochi"],
       unlockedAccessories: [],
       unlockedToys: [],
+      unlockedFoods: ["drumstick"],
       equipped: {},           // catId -> [accessoryId,...]
       settings: { hidden: false, paused: false, sound: true, trails: true, playful: false },
       seenMilestones: [],
@@ -96,6 +97,9 @@ const StreakManager = (() => {
         }
         if (m.kind === "toy" && !state.unlockedToys.includes(m.refId)) {
           state.unlockedToys.push(m.refId);
+        }
+        if (m.kind === "food" && !state.unlockedFoods.includes(m.refId)) {
+          state.unlockedFoods.push(m.refId);
         }
         hits.push(m);
       }

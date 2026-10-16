@@ -15,6 +15,7 @@
     toast: (message, opts) => UI.toast(message, opts),
     toggleEquip: (catId, accessoryId) => StreakManager.toggleEquip(catId, accessoryId),
     getUnlockedToys: () => StreakManager.get().unlockedToys,
+    getUnlockedFoods: () => StreakManager.get().unlockedFoods,
   };
 
   function syncActiveCats() {

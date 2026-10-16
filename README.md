@@ -67,11 +67,13 @@ Opening `index.html` directly via `file://` also works.
   - **🧸** opens that cat's toy box. Tap an unlocked toy to send the cat over
     to play with it (it sits and wiggles the toy in place); tap 🧸 again to
     call the cat back — the toy stays behind on the desk, left out.
-  - **🍗** feeds the cat — it sits and eats for a few seconds, then leaves a
-    poop behind roughly a minute later, every time (regardless of
-    Playful/Serious mode) — one poop per meal, never more, never fewer, and
-    never one without a feeding. Where it lands depends on the mode: see
-    below. Feeding counts as caring for it today, same as a pat.
+  - **🍗** opens that cat's food board. Drumstick is available from day one;
+    Fish, Canned Food, and Milk unlock with the streak. Tap an unlocked food
+    to feed it — it sits and eats for a few seconds, then leaves a poop
+    behind roughly a minute later, every time (regardless of Playful/Serious
+    mode) — one poop per meal, never more, never fewer, and never one
+    without a feeding. Where it lands depends on the mode: see below.
+    Feeding counts as caring for it today, same as a pat.
   - Clicking (to pat) or starting to drag the cat immediately clears all of
     these out of the way instead of leaving them floating mid-interaction —
     a pat keeps them hidden until you hover again, while dropping a drag
@@ -100,13 +102,14 @@ Opening `index.html` directly via `file://` also works.
 
 ## How the streak & rewards loop works
 
-- Patting a cat at least once records today as cared-for.
-- Patting on consecutive calendar days increases the streak by one;
-  patting again the same day is a no-op; missing a day resets the streak
-  to zero on the next pat.
+- Patting a cat, or feeding it, at least once records today as cared-for.
+- Doing either on consecutive calendar days increases the streak by one;
+  doing it again the same day is a no-op; missing a day resets the streak
+  to zero on the next one.
 - Streak milestones unlock permanently:
   - 3 / 10 / 14 / 21 / 45 / 60 / 100 days → closet accessories (hat, clothes, shoes, misc.)
   - 5 / 18 / 35 days → toys
+  - 8 / 25 / 50 days → food (Fish, Canned Food, Milk) — Drumstick is free from day one
   - 7 / 30 / 100 days → new cats (Shadow, Snowy, Celestial)
 - Everything persists in `localStorage`, so progress survives a reload.
 

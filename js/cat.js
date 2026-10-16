@@ -63,8 +63,6 @@ const PIXEL_Z_SVG = (() => {
   return `<svg viewBox="0 0 7 7" width="10" height="10" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
 })();
 
-const FOOD_GLYPH = "🍗"; // what appears when you feed a cat from the hover menu
-
 let sharedAudioCtx = null;
 function playPurr() {
   try {
@@ -121,6 +119,7 @@ class Cat {
     this.closetPanelOpen = false;
     this.closetActiveCategory = CLOSET_CATEGORIES[0].id;
     this.toyboxPanelOpen = false;
+    this.foodPanelOpen = false;
     this.playing = false;          // actively playing with a toy (frozen, animated)
     this.activeToyId = null;
     this.activeToyEl = null;       // the toy sprite on the desk — stays after play ends ("left out")
@@ -143,6 +142,7 @@ class Cat {
     this._buildClipboardPanel();
     this._buildClosetPanel();
     this._buildToyboxPanel();
+    this._buildFoodPanel();
   }
 
   groundFootY() {
@@ -339,16 +339,16 @@ class Cat {
     [pauseBtn, clipBtn, closetBtn, toyBtn, foodBtn].forEach((btn) => menu.appendChild(btn));
     document.getElementById("cats-layer").appendChild(menu);
 
-    // Two rows above the cat's head, each button getting a fixed (--dx,
-    // --dy) offset from that point, animated to on hover ("zoom out"
-    // reveal): closet/toybox/food along the bottom row, pause/clipboard
-    // centered on a row above them.
-    [
-      [-42, -20, closetBtn], [0, -20, toyBtn], [42, -20, foodBtn],
-      [-21, -64, pauseBtn], [21, -64, clipBtn],
-    ].forEach(([dx, dy, btn]) => {
-      btn.style.setProperty("--dx", dx + "px");
-      btn.style.setProperty("--dy", dy + "px");
+    // An arc above the cat's head, each button getting a fixed (--dx, --dy)
+    // offset from that point, animated to on hover ("zoom out" reveal). The
+    // extra "lift" pushes the whole arc further above the head than its own
+    // curve alone would, so even the two end buttons clear it comfortably.
+    const radius = 62;
+    const lift = 34;
+    [[160, pauseBtn], [125, clipBtn], [90, closetBtn], [55, toyBtn], [20, foodBtn]].forEach(([angleDeg, btn]) => {
+      const rad = (angleDeg * Math.PI) / 180;
+      btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
+      btn.style.setProperty("--dy", (-radius * Math.sin(rad) - lift).toFixed(1) + "px");
     });
 
     pauseBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
@@ -382,7 +382,7 @@ class Cat {
     foodBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
     foodBtn.addEventListener("click", (e) => {
       e.stopPropagation();
-      this._feed();
+      this._toggleFoodPanel();
     });
 
     // Hovering the cat (or its menu/clipboard panel) holds it still so the
@@ -427,6 +427,8 @@ class Cat {
     this.closetPanelEl.classList.remove("show");
     this.toyboxPanelOpen = false;
     this.toyboxPanelEl.classList.remove("show");
+    this.foodPanelOpen = false;
+    this.foodPanelEl.classList.remove("show");
     if (this.playing) this._endPlay();
   }
 
@@ -452,6 +454,7 @@ class Cat {
     if (this.clipboardPanelOpen) {
       this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
       this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+      this.foodPanelOpen = false; this.foodPanelEl.classList.remove("show");
     }
     this.clipboardPanelEl.classList.toggle("show", this.clipboardPanelOpen);
     if (this.clipboardPanelOpen) this._renderClipboardPanel();
@@ -525,6 +528,7 @@ class Cat {
     if (this.closetPanelOpen) {
       this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
       this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+      this.foodPanelOpen = false; this.foodPanelEl.classList.remove("show");
     }
     this.closetPanelEl.classList.toggle("show", this.closetPanelOpen);
     if (this.closetPanelOpen) this._renderClosetPanel();
@@ -611,6 +615,7 @@ class Cat {
     if (this.toyboxPanelOpen) {
       this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
       this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
+      this.foodPanelOpen = false; this.foodPanelEl.classList.remove("show");
     }
     this.toyboxPanelEl.classList.toggle("show", this.toyboxPanelOpen);
     if (this.toyboxPanelOpen) this._renderToyboxPanel();
@@ -682,6 +687,65 @@ class Cat {
     this.hoverToyBtn.title = "Call your cat back";
   }
 
+  _buildFoodPanel() {
+    const panel = document.createElement("div");
+    panel.className = "cat-closet-panel cat-food-panel";
+    panel.addEventListener("pointerdown", (e) => e.stopPropagation());
+    panel.addEventListener("pointerenter", () => this._hoverShow());
+    panel.addEventListener("pointerleave", () => this._hoverScheduleHide());
+    document.getElementById("cats-layer").appendChild(panel);
+    this.foodPanelEl = panel;
+
+    document.addEventListener("pointerdown", (e) => {
+      if (!this.foodPanelOpen) return;
+      if (panel.contains(e.target) || this.hoverFoodBtn.contains(e.target)) return;
+      this.foodPanelOpen = false;
+      panel.classList.remove("show");
+    });
+  }
+
+  _toggleFoodPanel() {
+    this.foodPanelOpen = !this.foodPanelOpen;
+    if (this.foodPanelOpen) {
+      this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
+      this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
+      this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+    }
+    this.foodPanelEl.classList.toggle("show", this.foodPanelOpen);
+    if (this.foodPanelOpen) this._renderFoodPanel();
+  }
+
+  _renderFoodPanel() {
+    const panel = this.foodPanelEl;
+    panel.innerHTML = "";
+
+    const header = document.createElement("div");
+    header.className = "closet-panel-header";
+    header.textContent = `Feed ${this.def.name}`;
+    panel.appendChild(header);
+
+    const grid = document.createElement("div");
+    grid.className = "closet-panel-grid";
+    const unlockedFoods = this.world.getUnlockedFoods();
+
+    Object.entries(FOODS).forEach(([id, food]) => {
+      const unlocked = unlockedFoods.includes(id);
+      const milestone = FOOD_MILESTONES.find((m) => m.id === id);
+      const item = document.createElement("div");
+      item.className = "closet-panel-item" + (unlocked ? "" : " locked");
+      item.innerHTML = `
+        <div class="closet-panel-item-glyph">${food.glyph}</div>
+        <div class="closet-panel-item-name">${food.name}</div>
+        <div class="closet-panel-item-req">${unlocked ? "Tap to feed" : `${milestone.unlockDays}-day streak`}</div>
+      `;
+      if (unlocked) {
+        item.addEventListener("click", () => this._feed(id));
+      }
+      grid.appendChild(item);
+    });
+    panel.appendChild(grid);
+  }
+
   // Ends the play session — the toy stays behind on the desk ("left out")
   // until the cat happens to walk over it again, or you unequip by dropping
   // a new toy next time.
@@ -735,12 +799,13 @@ class Cat {
     this._spawnMessItem(TOYS[toyId].glyph, this.x, this.footY - 24, "Picked up a toy left behind 🧸");
   }
 
-  // Feeding this cat (🍗 hover-menu button) sits it down to eat; only a cat
-  // that's actually eaten will leave a poop behind, about a minute later.
-  // Counts as caring for it today, same as a pat — feeding is interacting
-  // with your cat too, not just a free side effect.
-  _feed() {
+  // Feeding this cat a chosen unlocked food (from its food board) sits it
+  // down to eat; only a cat that's actually eaten will leave a poop behind,
+  // about a minute later. Counts as caring for it today, same as a pat —
+  // feeding is interacting with your cat too, not just a free side effect.
+  _feed(foodId) {
     if (this.dragging || this.eating) return;
+    const food = FOODS[foodId] || FOODS.drumstick;
     if (this.carryingToyId) this._dropCarriedToy();
     if (this.playing) this._endPlay();
     this.eating = true;
@@ -751,10 +816,11 @@ class Cat {
     this.clipboardPanelOpen = false; this.clipboardPanelEl.classList.remove("show");
     this.closetPanelOpen = false; this.closetPanelEl.classList.remove("show");
     this.toyboxPanelOpen = false; this.toyboxPanelEl.classList.remove("show");
+    this.foodPanelOpen = false; this.foodPanelEl.classList.remove("show");
 
     const el = document.createElement("div");
     el.className = "active-toy playing";
-    el.textContent = FOOD_GLYPH;
+    el.textContent = food.glyph;
     document.getElementById("cats-layer").appendChild(el);
     this.eatingEl = el;
     this.hoverFoodBtn.classList.add("active");
@@ -1046,7 +1112,7 @@ class Cat {
     // the cat exactly where and as it is, walk-cycle frame included, by
     // rendering with the instant freezing began instead of the live clock,
     // rather than snapping it into a sit.
-    const softFreeze = this.hoverPaused || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen;
+    const softFreeze = this.hoverPaused || this.clipboardPanelOpen || this.closetPanelOpen || this.toyboxPanelOpen || this.foodPanelOpen;
     if (softFreeze) {
       if (!this._wasHoverFrozen) {
         this._wasHoverFrozen = true;
@@ -1254,6 +1320,14 @@ class Cat {
     this.toyboxPanelEl.style.left = Math.round(toyboxLeft) + "px";
     this.toyboxPanelEl.style.top = Math.round(toyboxTop) + "px";
 
+    const foodWidth = 230;
+    let foodLeft = this.x - foodWidth / 2;
+    foodLeft = Math.max(10, Math.min(window.innerWidth - foodWidth - 10, foodLeft));
+    const foodH = this.foodPanelEl.offsetHeight || 220;
+    const foodTop = Math.max(34, headY - foodH - 78);
+    this.foodPanelEl.style.left = Math.round(foodLeft) + "px";
+    this.foodPanelEl.style.top = Math.round(foodTop) + "px";
+
     // The active toy sits on the ground right beside the cat while it plays.
     if (this.activeToyEl) {
       const toyX = this.x + (this.facing === 1 ? -frame.w * 0.45 : frame.w * 0.45);
@@ -1316,6 +1390,7 @@ class Cat {
     this.clipboardPanelEl.remove();
     this.closetPanelEl.remove();
     this.toyboxPanelEl.remove();
+    this.foodPanelEl.remove();
     this.el.remove();
   }
 }

@@ -339,13 +339,16 @@ class Cat {
     [pauseBtn, clipBtn, closetBtn, toyBtn, foodBtn].forEach((btn) => menu.appendChild(btn));
     document.getElementById("cats-layer").appendChild(menu);
 
-    // Half-circle arc above the cat; each button gets a fixed (--dx, --dy)
-    // offset from the arc's center, animated to on hover ("zoom out" reveal).
-    const radius = 62;
-    [[160, pauseBtn], [125, clipBtn], [90, closetBtn], [55, toyBtn], [20, foodBtn]].forEach(([angleDeg, btn]) => {
-      const rad = (angleDeg * Math.PI) / 180;
-      btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
-      btn.style.setProperty("--dy", (-radius * Math.sin(rad)).toFixed(1) + "px");
+    // Two rows above the cat's head, each button getting a fixed (--dx,
+    // --dy) offset from that point, animated to on hover ("zoom out"
+    // reveal): closet/toybox/food along the bottom row, pause/clipboard
+    // centered on a row above them.
+    [
+      [-42, -20, closetBtn], [0, -20, toyBtn], [42, -20, foodBtn],
+      [-21, -64, pauseBtn], [21, -64, clipBtn],
+    ].forEach(([dx, dy, btn]) => {
+      btn.style.setProperty("--dx", dx + "px");
+      btn.style.setProperty("--dy", dy + "px");
     });
 
     pauseBtn.addEventListener("pointerdown", (e) => e.stopPropagation());
@@ -734,6 +737,8 @@ class Cat {
 
   // Feeding this cat (🍗 hover-menu button) sits it down to eat; only a cat
   // that's actually eaten will leave a poop behind, about a minute later.
+  // Counts as caring for it today, same as a pat — feeding is interacting
+  // with your cat too, not just a free side effect.
   _feed() {
     if (this.dragging || this.eating) return;
     if (this.carryingToyId) this._dropCarriedToy();
@@ -753,6 +758,7 @@ class Cat {
     document.getElementById("cats-layer").appendChild(el);
     this.eatingEl = el;
     this.hoverFoodBtn.classList.add("active");
+    this.world.onPat(this.def.id);
   }
 
   _finishEating() {

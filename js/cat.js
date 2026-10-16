@@ -339,16 +339,17 @@ class Cat {
     [pauseBtn, clipBtn, closetBtn, toyBtn, foodBtn].forEach((btn) => menu.appendChild(btn));
     document.getElementById("cats-layer").appendChild(menu);
 
-    // An arc above the cat's head, each button getting a fixed (--dx, --dy)
-    // offset from that point, animated to on hover ("zoom out" reveal). The
-    // extra "lift" pushes the whole arc further above the head than its own
-    // curve alone would, so even the two end buttons clear it comfortably.
-    const radius = 62;
-    const lift = 34;
-    [[160, pauseBtn], [125, clipBtn], [90, closetBtn], [55, toyBtn], [20, foodBtn]].forEach(([angleDeg, btn]) => {
-      const rad = (angleDeg * Math.PI) / 180;
-      btn.style.setProperty("--dx", (radius * Math.cos(rad)).toFixed(1) + "px");
-      btn.style.setProperty("--dy", (-radius * Math.sin(rad) - lift).toFixed(1) + "px");
+    // Two rows above the cat's head, each button getting a fixed (--dx,
+    // --dy) offset from that point, animated to on hover ("zoom out"
+    // reveal): closet/toybox/food along a curved bottom row (toybox lifted
+    // higher in the middle, like a shallow arc), pause/clipboard centered
+    // on a row well above them.
+    [
+      [-44, -28, closetBtn], [0, -40, toyBtn], [44, -28, foodBtn],
+      [-22, -78, pauseBtn], [22, -78, clipBtn],
+    ].forEach(([dx, dy, btn]) => {
+      btn.style.setProperty("--dx", dx + "px");
+      btn.style.setProperty("--dy", dy + "px");
     });
 
     pauseBtn.addEventListener("pointerdown", (e) => e.stopPropagation());

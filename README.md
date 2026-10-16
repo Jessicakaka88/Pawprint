@@ -48,12 +48,13 @@ Opening `index.html` directly via `file://` also works.
   let go (no need for a precise drop), or the floor if nothing's close by.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints,
   rotated to point the way it's heading, that fade out after a few seconds.
-- **Hover over a cat** — five buttons "zoom out" above its head in two rows
-  (closet/toybox/food along the bottom, pause/clipboard centered on a row
-  above them). Hovering, and clicking any of these buttons, just freezes
-  the cat exactly as it is — mid-stride, sitting, lying down, whatever it
-  was doing — so the buttons aren't a moving target, without snapping it
-  into a sit first.
+- **Hover over a cat** — five buttons "zoom out" above its head in two
+  curved rows (closet/toybox/food along a shallow arc on the bottom —
+  toybox lifted higher in the middle — pause/clipboard centered on a row
+  well above them). Hovering, and clicking any of these buttons, just
+  freezes the cat exactly as it is — mid-stride, sitting, lying down,
+  whatever it was doing — so the buttons aren't a moving target, without
+  snapping it into a sit first.
   - **⏸/▶** pauses or resumes just that cat's movement (still pettable and
     draggable while paused) — this one does sit it upright and hold still,
     not just freeze mid-stride, since pausing is a deliberate "stop" rather
@@ -129,8 +130,9 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   them apart), frame selection (walk-cycle animation, sit, lie down, patted,
   a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
   particles, a tiny synthesized purr via the Web Audio API, the per-cat
-  hover menu (pause/clipboard/closet/toybox/food, arranged in two rows via a
-  `--dx`/`--dy` CSS custom property per button), the HTML5 drag-and-drop
+  hover menu (pause/clipboard/closet/toybox/food, arranged in two curved
+  rows via a `--dx`/`--dy` CSS custom property per button), the HTML5
+  drag-and-drop
   "clipboard" (native `dragover`/`drop` to save a file or dragged text,
   `DownloadURL`/Clipboard API to take it back out), the toy box ("playing"
   freezes the cat next to an animated toy sprite until called back), feeding

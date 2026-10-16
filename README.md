@@ -2,8 +2,8 @@
 
 A browser-based clickable prototype for a macOS desk-pet app: pixel-art cats
 that live on your screen, wander around, perch on windows, react to your
-cursor, purr when patted, and reward daily care with a streak system that
-unlocks new cats and accessories.
+cursor, occasionally notice and pounce at it, and reward daily care with a
+streak system that unlocks new cats and accessories.
 
 This is a prototype, not a native macOS app — it runs in any browser and
 simulates the desktop (menu bar, dock, draggable windows) so the cat
@@ -37,17 +37,26 @@ Opening `index.html` directly via `file://` also works.
   cat that's just standing still (idle) and it glances to face the cursor;
   once it's settled into a sit or a lie-down it holds that facing steady
   instead of flicking back and forth as the cursor passes by.
-- **Pat it.** Click/tap the cat for a quick pat: it purrs (synthesized sound,
-  toggleable), squints happily, and a pixel-art heart floats up. This also
-  records today's care streak, and hides its hover-menu buttons the same way
-  a click/drag does — they only come back the next time you actually hover
-  over the cat again.
+- **Pat it.** Click/tap the cat for a quick pat: it squints happily and a
+  pixel-art heart floats up. This also records today's care streak, and
+  hides its hover-menu buttons the same way a click/drag does — they only
+  come back the next time you actually hover over the cat again.
+- **"Mochi notices you."** Roughly once in 20 of its idle decisions, a cat
+  interrupts its usual wandering to crouch (a 👀 pops up above its head),
+  lunge a short distance toward whichever side of the screen your cursor is
+  on, and bat a paw at the air for a beat (🐾 swipes), before settling back
+  into an idle pause. Click the cat while it's mid-lunge or mid-bat and it
+  "catches" your cursor instead of taking an ordinary pat — a distinct toast
+  and the same heart-and-streak credit as a pat.
 - **Drag it.** Press and drag the cat (hovering alone never starts a drag) —
   it hangs by the scruff with its limbs swinging like a pendulum opposite
   your cursor's motion, and snaps onto whichever window is nearest when you
   let go (no need for a precise drop), or the floor if nothing's close by.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints,
   rotated to point the way it's heading, that fade out after a few seconds.
+- **Window-perching.** While settled on top of a window, a cat occasionally
+  reaches a paw down over the edge at whatever's on screen (the same 🐾
+  swipe as the pounce-bat), every few seconds.
 - **Hover over a cat** — five buttons "zoom out" above its head in two
   curved rows (closet/toybox/food along a shallow arc on the bottom —
   toybox lifted higher in the middle — pause/clipboard centered on a row
@@ -88,7 +97,7 @@ Opening `index.html` directly via `file://` also works.
     **prototype demo tools** to simulate the next day or a missed day so you
     can preview the reward loop without waiting on real calendar days.
   - **Settings** — hide all cats, pause movement & interactions globally,
-    toggle purring sound / paw prints, and switch **Playful mode** on: every
+    toggle paw prints, and switch **Playful mode** on: every
     so often while a cat is out walking, it grabs one of its unlocked toys
     and carries it around in its mouth, playing with it for 10–20 seconds,
     then leaves it behind wherever it ends up — never just teleported to a
@@ -129,7 +138,7 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   handling (tap-to-pat vs. drag, with a movement/time threshold to tell
   them apart), frame selection (walk-cycle animation, sit, lie down, patted,
   a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
-  particles, a tiny synthesized purr via the Web Audio API, the per-cat
+  particles, the per-cat
   hover menu (pause/clipboard/closet/toybox/food, arranged in two curved
   rows via a `--dx`/`--dy` CSS custom property per button), the HTML5
   drag-and-drop
@@ -146,12 +155,22 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   mouth for 10-20s, then leaves it behind as a normal pick-up-able item right
   where the cat ends up. While perched, a
   cat tracks its window's element directly (`offsetLeft`/`offsetTop`) every
-  frame so dragging the window carries the cat with it. Cursor reaction is
+  frame so dragging the window carries the cat with it, and periodically
+  reaches a paw down over the edge (shared `_spawnPawSwipe()` helper, also
+  used by the pounce-bat below). Cursor reaction is
   approximated by having a standing-still (idle) cat turn to face the
   cursor when it comes close; once settled into a sit or a lie-down, that
   facing is locked in place instead of being re-evaluated against the
   cursor every frame, which is what used to make a stationary cat flicker
-  left/right as the mouse passed near it.
+  left/right as the mouse passed near it. The rare (1-in-20) "notices you"
+  sequence — queued from the same per-decision roll as its next walk/sit/lie
+  choice — crouches facing the cursor's side, lunges a short distance that
+  way at a sped-up walk, bats at the air for a beat, then returns to idle;
+  clicking the cat while a `pouncing` flag is set intercepts the normal pat
+  handler into a distinct "catch" reaction instead. No literal eye/pupil
+  tracking or crouch/pounce sprite art exists, so this is a flat-sprite
+  approximation built from the existing sit pose, speed override, and
+  particle effects rather than new animation frames.
 - `js/streak.js` — streak, unlock, and settings persistence (`localStorage`),
   including the day-advance debug helpers used by the Streak tab's demo
   tools.

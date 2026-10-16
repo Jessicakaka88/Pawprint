@@ -255,6 +255,29 @@ html, body {
   20%  { opacity: 0.95; }
   100% { opacity: 0; transform: translate(10%, -26px) scale(1.3); }
 }
+.notice-particle {
+  position: absolute;
+  font-size: 14px;
+  pointer-events: none;
+  animation: notice-pop 0.9s ease-out forwards;
+}
+@keyframes notice-pop {
+  0%   { opacity: 0; transform: translate(-50%, 0) scale(0.4); }
+  25%  { opacity: 1; transform: translate(-50%, -5px) scale(1.2); }
+  70%  { opacity: 1; transform: translate(-50%, -6px) scale(1); }
+  100% { opacity: 0; transform: translate(-50%, -10px) scale(0.9); }
+}
+.paw-swipe-particle {
+  position: absolute;
+  font-size: 16px;
+  pointer-events: none;
+  animation: paw-swipe 0.4s ease-out forwards;
+}
+@keyframes paw-swipe {
+  0%   { opacity: 0; transform: translate(-50%, 0) rotate(-25deg) scale(0.7); }
+  30%  { opacity: 1; }
+  100% { opacity: 0; transform: translate(-30%, 8px) rotate(25deg) scale(1.1); }
+}
 
 /* ---------- Dock ---------- */
 #dock {

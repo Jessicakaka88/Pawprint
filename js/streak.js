@@ -27,7 +27,7 @@ const StreakManager = (() => {
       unlockedToys: [],
       unlockedFoods: ["drumstick"],
       equipped: {},           // catId -> [accessoryId,...]
-      settings: { hidden: false, paused: false, sound: true, trails: true, playful: false },
+      settings: { hidden: false, paused: false, trails: true, playful: false },
       seenMilestones: [],
     };
   }

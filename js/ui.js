@@ -136,7 +136,6 @@ const UI = (() => {
     const s = StreakManager.get().settings;
     document.getElementById("toggle-hide").checked = !s.hidden; // checkbox = "show cats", inverse of the stored "hidden" flag
     document.getElementById("toggle-pause").checked = !!s.paused;
-    document.getElementById("toggle-sound").checked = !!s.sound;
     document.getElementById("toggle-trails").checked = !!s.trails;
     document.getElementById("toggle-playful").checked = !!s.playful;
     document.getElementById("mode-description").textContent = s.playful
@@ -156,9 +155,6 @@ const UI = (() => {
     });
     document.getElementById("toggle-pause").addEventListener("change", (e) => {
       StreakManager.setSetting("paused", e.target.checked);
-    });
-    document.getElementById("toggle-sound").addEventListener("change", (e) => {
-      StreakManager.setSetting("sound", e.target.checked);
     });
     document.getElementById("toggle-trails").addEventListener("change", (e) => {
       StreakManager.setSetting("trails", e.target.checked);

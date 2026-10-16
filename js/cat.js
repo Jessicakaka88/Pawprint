@@ -63,34 +63,6 @@ const PIXEL_Z_SVG = (() => {
   return `<svg viewBox="0 0 7 7" width="10" height="10" shape-rendering="crispEdges" style="display:block">${rects}</svg>`;
 })();
 
-let sharedAudioCtx = null;
-function playPurr() {
-  try {
-    sharedAudioCtx = sharedAudioCtx || new (window.AudioContext || window.webkitAudioContext)();
-    const ctx = sharedAudioCtx;
-    const now = ctx.currentTime;
-    const osc = ctx.createOscillator();
-    const lfo = ctx.createOscillator();
-    const gain = ctx.createGain();
-    const lfoGain = ctx.createGain();
-    osc.type = "triangle";
-    osc.frequency.value = 32;
-    lfo.type = "sine";
-    lfo.frequency.value = 22; // purr "rumble" rate
-    lfoGain.gain.value = 0.5;
-    gain.gain.value = 0.0001;
-    lfo.connect(lfoGain);
-    lfoGain.connect(gain.gain);
-    osc.connect(gain);
-    gain.connect(ctx.destination);
-    gain.gain.setValueAtTime(0.0001, now);
-    gain.gain.linearRampToValueAtTime(0.09, now + 0.15);
-    gain.gain.linearRampToValueAtTime(0.0001, now + 1.0);
-    osc.start(now); lfo.start(now);
-    osc.stop(now + 1.05); lfo.stop(now + 1.05);
-  } catch (e) { /* audio not available — silently skip */ }
-}
-
 class Cat {
   constructor(def, world) {
     this.def = def;           // {id, name, palette}
@@ -105,6 +77,7 @@ class Cat {
     this.stepStart = 0;
     this.stepFromX = this.x; this.stepFromFootY = this.footY;
     this.patUntil = 0;
+    this.pouncing = false;    // mid cursor-pounce — clicking the cat right now "catches" it
     this.dragSwing = 0;       // -1 = limbs swung far left, +1 = far right
     this.dragVX = 0;          // smoothed cursor velocity while lifted (px/move)
     this.dragVY = 0;
@@ -674,6 +647,7 @@ class Cat {
     if (this.eating) this._finishEating();
     this._removeActiveToy();
     this.playing = true;
+    this.pouncing = false;
     this.activeToyId = toyId;
     this.queue = [];
     this.currentStep = null;
@@ -811,6 +785,7 @@ class Cat {
     if (this.carryingToyId) this._dropCarriedToy();
     if (this.playing) this._endPlay();
     this.eating = true;
+    this.pouncing = false;
     this.state = "sit";
     this.queue = [];
     this.currentStep = null;
@@ -884,6 +859,7 @@ class Cat {
   _startDrag() {
     if (this.carryingToyId) this._dropCarriedToy();
     this.dragging = true;
+    this.pouncing = false;
     this.state = "dragged";
     this.dragSwing = 0; this.dragVX = 0; this.dragVY = 0;
     this.queue = [];
@@ -926,12 +902,24 @@ class Cat {
 
   pat() {
     if (this.dragging) return;
+    // Clicking mid-pounce "catches" the cursor instead of an ordinary pat.
+    if (this.pouncing) { this._catchCursor(); return; }
     this.state = "patted";
     this.patUntil = performance.now() + 1100;
     this.queue = [];
     this.currentStep = null;
     this._spawnHearts();
-    if (this.world.getSettings().sound) playPurr();
+    this.world.onPat(this.def.id);
+  }
+
+  _catchCursor() {
+    this.pouncing = false;
+    this.state = "patted";
+    this.patUntil = performance.now() + 1100;
+    this.queue = [];
+    this.currentStep = null;
+    this._spawnHearts();
+    this.world.toast(`${this.def.name} catches it! 🎯`, { icon: "🐾" });
     this.world.onPat(this.def.id);
   }
 
@@ -998,8 +986,51 @@ class Cat {
     setTimeout(() => el.remove(), 1300);
   }
 
+  // A quick "👀 I see you" blip above the head the instant a hunt begins.
+  _spawnNoticeParticle() {
+    const { h } = SPRITEART.sitSize();
+    const el = document.createElement("div");
+    el.className = "notice-particle";
+    el.textContent = "👀";
+    el.style.left = Math.round(this.x) + "px";
+    el.style.top = Math.round(this.footY - h - 8) + "px";
+    document.getElementById("cats-layer").appendChild(el);
+    setTimeout(() => el.remove(), 900);
+  }
+
+  // A paw swipe near the cat's front — used both for batting at the
+  // cursor mid-hunt and for an idle paw-reach while perched on a window.
+  _spawnPawSwipe() {
+    const { w, h } = SPRITEART.sitSize();
+    const swipeX = this.x + (this.facing === 1 ? w * 0.32 : -w * 0.32);
+    const el = document.createElement("div");
+    el.className = "paw-swipe-particle";
+    el.textContent = "🐾";
+    el.style.left = Math.round(swipeX) + "px";
+    el.style.top = Math.round(this.footY - h * 0.5) + "px";
+    document.getElementById("cats-layer").appendChild(el);
+    setTimeout(() => el.remove(), 400);
+  }
+
+  // While perched on top of a window, every so often reach a paw down at
+  // whatever's on screen below — same gesture as batting mid-hunt. Timed
+  // off the step object so each fresh perch starts its own cycle.
+  _maybeReachPaw(step, now) {
+    if (step._nextPawReachAt == null) step._nextPawReachAt = now + 1500 + Math.random() * 2000;
+    if (now < step._nextPawReachAt) return;
+    step._nextPawReachAt = now + 2500 + Math.random() * 3500;
+    this._spawnPawSwipe();
+  }
+
   _planNext() {
     const groundY = this.groundFootY();
+    // "Mochi notices you": a rare (1-in-20) chance to crouch, pounce toward
+    // the cursor's side, and bat at it, instead of its usual next move.
+    if (!this.carryingToyId && Math.random() < 0.05) {
+      this._queueHunt(groundY);
+      this._lastPlannedType = "hunt";
+      return;
+    }
     const rects = this.world.getWindowRects();
     // A direct floor sit never walks anywhere first, so if it followed
     // another direct floor sit it would just be an invisible facing flip
@@ -1040,6 +1071,20 @@ class Cat {
     }
   }
 
+  // Notice the cursor, crouch facing it, pounce a short lunge toward it,
+  // then bat at it a few times — click the cat during the pounce/bat to
+  // "catch" it (see pat()).
+  _queueHunt(groundY) {
+    const faceRight = CatMouse.x > this.x;
+    const lungeDist = 70 + Math.random() * 50;
+    const targetX = Math.max(30, Math.min(window.innerWidth - 30,
+      this.x + (faceRight ? lungeDist : -lungeDist)));
+    this.queue.push({ type: "huntCrouch", ms: 550 + Math.random() * 250, faceRight });
+    this.queue.push({ type: "pounce", x: targetX, footY: groundY });
+    this.queue.push({ type: "huntBat", ms: 700 + Math.random() * 400 });
+    this.queue.push({ type: "idle", ms: 500 + Math.random() * 500 });
+  }
+
   _updateCursorGlance() {
     // Only an idle (standing-still, not yet settled) cat glances toward the
     // cursor — a lightweight stand-in for live eye/ear tracking. A sitting
@@ -1058,6 +1103,7 @@ class Cat {
     if (settings.hidden) {
       this.el.classList.add("hidden-cat");
       this._hideFloatingMenus();
+      this.pouncing = false;
       return;
     }
     this.el.classList.remove("hidden-cat");
@@ -1100,6 +1146,7 @@ class Cat {
         // Just became paused — stop wherever we are and sit upright instead
         // of freezing mid-stride.
         this._wasFrozen = true;
+        this.pouncing = false;
         this.queue = [];
         this.currentStep = null;
         this.state = "sit";
@@ -1137,11 +1184,13 @@ class Cat {
     }
 
     const step = this.currentStep;
-    if (step.type === "walk") {
+    if (step.type === "walk" || step.type === "pounce") {
       // Walk toward {x, footY} at a constant speed (diagonal if footY
-      // differs, e.g. climbing onto a window) — never an instant jump.
+      // differs, e.g. climbing onto a window) — never an instant jump. A
+      // "pounce" is the same walk, just faster, and opens the catch window.
       // If the target is behind the cat, turn to face it first instead of
       // sliding backwards.
+      if (step.type === "pounce") this.pouncing = true;
       const targetFootY = step.footY != null ? step.footY : this.footY;
       const dxw = step.x - this.x;
       const dyw = targetFootY - this.footY;
@@ -1171,7 +1220,7 @@ class Cat {
         } else {
           step.turning = false;
           this.state = "walk";
-          const speed = 52; // px/sec
+          const speed = step.type === "pounce" ? 190 : 52; // px/sec
           const move = Math.min(dist, speed * (dt / 1000));
           this.x += (dxw / dist) * move;
           this.footY += (dyw / dist) * move;
@@ -1192,9 +1241,30 @@ class Cat {
         } else {
           this.x = step.anchorEl.offsetLeft + step.anchorOffsetX;
           this.footY = step.anchorEl.offsetTop + 6;
+          this._maybeReachPaw(step, now);
         }
       }
       if (now - this.stepStart >= step.ms) this.currentStep = null;
+    } else if (step.type === "huntCrouch") {
+      this.state = "sit";
+      if (!step._started) {
+        step._started = true;
+        this.facing = step.faceRight ? 1 : -1;
+        this._spawnNoticeParticle();
+      }
+      if (now - this.stepStart >= step.ms) this.currentStep = null;
+    } else if (step.type === "huntBat") {
+      this.state = "sit";
+      this.pouncing = true;
+      if (step._nextBatAt == null) step._nextBatAt = now + 120;
+      if (now >= step._nextBatAt) {
+        step._nextBatAt = now + 280 + Math.random() * 220;
+        this._spawnPawSwipe();
+      }
+      if (now - this.stepStart >= step.ms) {
+        this.currentStep = null;
+        this.pouncing = false;
+      }
     } else if (step.type === "lie") {
       this.state = "lying";
       this.facing = this.lastWalkFacing; // match the way it was just walking, not a stray cursor glance

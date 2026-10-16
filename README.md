@@ -44,10 +44,13 @@ Opening `index.html` directly via `file://` also works.
 - **"Mochi notices you."** Roughly once in 20 of its idle decisions, a cat
   interrupts its usual wandering to crouch (a 👀 pops up above its head),
   lunge a short distance toward whichever side of the screen your cursor is
-  on, and bat a paw at the air for a beat (🐾 swipes), before settling back
-  into an idle pause. Click the cat while it's mid-lunge or mid-bat and it
+  on, and bat at the air (🐾 swipes), staying put and batting as long as
+  your cursor keeps doing *something* — moving it around resets the clock
+  indefinitely. Click the cat while it's mid-lunge or mid-bat and it
   "catches" your cursor instead of taking an ordinary pat — a distinct toast
-  and the same heart-and-streak credit as a pat.
+  and the same heart-and-streak credit as a pat. Leave the cursor dead still
+  for a full 10 seconds, though, and it loses interest and walks off in the
+  opposite direction instead of waiting around forever.
 - **Drag it.** Press and drag the cat (hovering alone never starts a drag) —
   it hangs by the scruff with its limbs swinging like a pendulum opposite
   your cursor's motion, and snaps onto whichever window is nearest when you
@@ -165,12 +168,16 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   left/right as the mouse passed near it. The rare (1-in-20) "notices you"
   sequence — queued from the same per-decision roll as its next walk/sit/lie
   choice — crouches facing the cursor's side, lunges a short distance that
-  way at a sped-up walk, bats at the air for a beat, then returns to idle;
-  clicking the cat while a `pouncing` flag is set intercepts the normal pat
-  handler into a distinct "catch" reaction instead. No literal eye/pupil
-  tracking or crouch/pounce sprite art exists, so this is a flat-sprite
-  approximation built from the existing sit pose, speed override, and
-  particle effects rather than new animation frames.
+  way at a sped-up walk, then holds an open-ended "touch" step: it keeps
+  batting at the air while a module-level `lastCursorActivityAt` timestamp
+  (updated on every `pointermove`) keeps getting refreshed, and gives up —
+  clearing the hunt and queuing a walk away from the cursor's side instead —
+  once 10 seconds pass with that timestamp unchanged. Clicking the cat while
+  a `pouncing` flag is set (true for the whole lunge/touch span) intercepts
+  the normal pat handler into a distinct "catch" reaction instead. No
+  literal eye/pupil tracking or crouch/pounce sprite art exists, so this is
+  a flat-sprite approximation built from the existing sit pose, speed
+  override, and particle effects rather than new animation frames.
 - `js/streak.js` — streak, unlock, and settings persistence (`localStorage`),
   including the day-advance debug helpers used by the Streak tab's demo
   tools.

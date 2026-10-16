@@ -5,7 +5,11 @@
  */
 
 const CatMouse = { x: -9999, y: -9999 };
-document.addEventListener("pointermove", (e) => { CatMouse.x = e.clientX; CatMouse.y = e.clientY; });
+let lastCursorActivityAt = performance.now();
+document.addEventListener("pointermove", (e) => {
+  CatMouse.x = e.clientX; CatMouse.y = e.clientY;
+  lastCursorActivityAt = performance.now();
+});
 
 // Pink pixel-art heart shown above a cat's head when it's patted.
 // Grid: X = heart, outline/shade/highlight are derived from neighbours.
@@ -1072,8 +1076,10 @@ class Cat {
   }
 
   // Notice the cursor, crouch facing it, pounce a short lunge toward it,
-  // then bat at it a few times — click the cat during the pounce/bat to
-  // "catch" it (see pat()).
+  // then bat/wait at it, watching for the cursor to do anything — click the
+  // cat during the pounce/touch to "catch" it (see pat()). If the cursor
+  // sits dead still for a full 10 seconds while it's being touched, the cat
+  // loses interest and walks off instead of waiting forever.
   _queueHunt(groundY) {
     const faceRight = CatMouse.x > this.x;
     const lungeDist = 70 + Math.random() * 50;
@@ -1081,8 +1087,18 @@ class Cat {
       this.x + (faceRight ? lungeDist : -lungeDist)));
     this.queue.push({ type: "huntCrouch", ms: 550 + Math.random() * 250, faceRight });
     this.queue.push({ type: "pounce", x: targetX, footY: groundY });
-    this.queue.push({ type: "huntBat", ms: 700 + Math.random() * 400 });
-    this.queue.push({ type: "idle", ms: 500 + Math.random() * 500 });
+    this.queue.push({ type: "huntTouch" });
+  }
+
+  // Walk off in whichever direction leads away from the cursor, then settle
+  // into a normal idle pause — used when a hunt is given up on.
+  _queueWalkAway() {
+    const awayRight = CatMouse.x < this.x;
+    const dist = 120 + Math.random() * 160;
+    const targetX = Math.max(30, Math.min(window.innerWidth - 30,
+      this.x + (awayRight ? dist : -dist)));
+    this.queue.push({ type: "walk", x: targetX, footY: this.groundFootY() });
+    this.queue.push({ type: "idle", ms: 400 + Math.random() * 600 });
   }
 
   _updateCursorGlance() {
@@ -1253,17 +1269,22 @@ class Cat {
         this._spawnNoticeParticle();
       }
       if (now - this.stepStart >= step.ms) this.currentStep = null;
-    } else if (step.type === "huntBat") {
+    } else if (step.type === "huntTouch") {
       this.state = "sit";
       this.pouncing = true;
       if (step._nextBatAt == null) step._nextBatAt = now + 120;
       if (now >= step._nextBatAt) {
-        step._nextBatAt = now + 280 + Math.random() * 220;
+        step._nextBatAt = now + 400 + Math.random() * 400;
         this._spawnPawSwipe();
       }
-      if (now - this.stepStart >= step.ms) {
-        this.currentStep = null;
+      // Give up and walk away once the cursor has sat dead still (no move,
+      // no click-to-catch) for a full 10 seconds while being touched.
+      const stillSince = Math.max(lastCursorActivityAt, this.stepStart);
+      if (now - stillSince >= 10000) {
         this.pouncing = false;
+        this.currentStep = null;
+        this.queue = [];
+        this._queueWalkAway();
       }
     } else if (step.type === "lie") {
       this.state = "lying";

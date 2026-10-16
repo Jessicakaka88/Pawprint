@@ -220,6 +220,24 @@ html, body {
 }
 .cat:hover .cat-name-tag { opacity: 1; }
 
+.cat-session-tooltip {
+  position: absolute;
+  transform: translate(-50%, -100%);
+  font-size: 11px;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  color: #fff;
+  background: rgba(30,30,34,0.88);
+  padding: 5px 10px;
+  border-radius: 8px;
+  white-space: nowrap;
+  z-index: 1150;
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.16s ease, transform 0.16s ease;
+}
+.cat-session-tooltip.show { opacity: 1; transform: translate(-50%, -100%) translateY(-4px); }
+
 .heart-particle {
   position: absolute;
   line-height: 0;
@@ -639,17 +657,74 @@ html, body {
   font-weight: 600;
 }
 
-.streak-hero {
+.points-hero {
   display: flex;
   flex-direction: column;
   align-items: center;
   padding: 10px 0 6px;
 }
-.streak-flame { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(255,120,30,0.4)); }
-.streak-count { font-size: 36px; font-weight: 800; color: #222; line-height: 1; }
-.streak-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
+.points-icon { font-size: 40px; filter: drop-shadow(0 2px 4px rgba(255,120,30,0.4)); }
+.points-count { font-size: 36px; font-weight: 800; color: #222; line-height: 1; }
+.points-label { font-size: 11px; color: #888; text-transform: uppercase; letter-spacing: 0.06em; }
 
-#streak-status { text-align: center; }
+/* ---------- Study session controls ---------- */
+.session-box {
+  background: rgba(0,0,0,0.035);
+  border-radius: 12px;
+  padding: 12px;
+  margin-bottom: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+.session-box.running { background: rgba(255,157,108,0.12); }
+.session-kind-toggle, .session-mode-toggle {
+  display: flex;
+  gap: 6px;
+}
+.session-toggle-btn {
+  flex: 1;
+  border: 1px solid rgba(0,0,0,0.08);
+  background: #fff;
+  color: #555;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 7px 4px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.session-toggle-btn.active { background: #2b2b2b; color: #fff; border-color: #2b2b2b; }
+.session-toggle-btn:disabled { cursor: default; opacity: 0.55; }
+.session-duration {
+  border: 1px solid rgba(0,0,0,0.1);
+  background: #fff;
+  color: #333;
+  font-size: 12px;
+  font-weight: 600;
+  padding: 6px 8px;
+  border-radius: 8px;
+}
+.session-timer {
+  text-align: center;
+  font-size: 30px;
+  font-weight: 800;
+  color: #222;
+  font-variant-numeric: tabular-nums;
+  line-height: 1.1;
+  margin-top: 4px;
+}
+.session-timer-label { text-align: center; font-size: 11px; color: #888; margin-bottom: 2px; }
+.session-main-btn {
+  border: none;
+  background: #34c759;
+  color: #fff;
+  font-size: 13px;
+  font-weight: 700;
+  padding: 10px;
+  border-radius: 10px;
+  cursor: pointer;
+}
+.session-main-btn.stop { background: #ff3b30; }
 
 .milestone-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 16px; }
 .milestone-row {
@@ -662,11 +737,52 @@ html, body {
 }
 .milestone-row.done { background: rgba(52,199,89,0.12); }
 .milestone-days {
-  width: 40px; font-size: 12px; font-weight: 800; color: #555; flex: none; text-align: center;
+  width: 46px; font-size: 12px; font-weight: 800; color: #555; flex: none; text-align: center;
 }
 .milestone-row.done .milestone-days { color: #2a9d4a; }
 .milestone-reward { flex: 1; font-size: 11.5px; color: #444; }
 .milestone-check { font-size: 13px; }
+
+/* ---------- Study log ---------- */
+.study-log-box { margin-bottom: 16px; }
+.study-log-list { display: flex; flex-direction: column; gap: 6px; margin-top: 6px; }
+.study-log-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  background: rgba(0,0,0,0.035);
+  border-radius: 10px;
+  padding: 7px 10px;
+}
+.study-log-icon { font-size: 15px; flex: none; }
+.study-log-info { flex: 1; min-width: 0; display: flex; flex-direction: column; }
+.study-log-title { font-size: 11.5px; font-weight: 700; color: #333; }
+.study-log-when { font-size: 9.5px; color: #999; }
+.study-log-points { font-size: 11.5px; font-weight: 800; color: #c9622f; flex: none; }
+.study-log-empty { font-size: 11px; color: #888; padding: 6px 2px; line-height: 1.4; }
+
+/* ---------- Decor tab ---------- */
+.decor-grid { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.decor-item {
+  background: rgba(0,0,0,0.035);
+  border-radius: 10px;
+  padding: 10px 6px;
+  text-align: center;
+  border: 1px solid rgba(0,0,0,0.05);
+  cursor: pointer;
+}
+.decor-item .closet-panel-item-glyph { font-size: 24px; }
+.decor-item.locked { opacity: 0.5; cursor: default; }
+.decor-item.placed { border-color: #ff9d6c; background: rgba(255,157,108,0.14); }
+
+/* Placed decor sits fixed on the desktop itself, behind the cats/windows. */
+.decor-placed {
+  position: absolute;
+  font-size: 30px;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2));
+  pointer-events: none;
+  z-index: 2;
+}
 
 .debug-box {
   background: rgba(0,0,0,0.04);

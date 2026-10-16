@@ -1,9 +1,10 @@
 # Pawprint — Desk Pet Cats (clickable prototype)
 
-A browser-based clickable prototype for a macOS desk-pet app: pixel-art cats
-that live on your screen, wander around, perch on windows, react to your
-cursor, occasionally notice and pounce at it, and reward daily care with a
-streak system that unlocks new cats and accessories.
+A browser-based clickable prototype for a macOS desk-pet **study companion**:
+pixel-art cats that live on your screen, wander around, perch on windows,
+react to your cursor, and reward *logged study time* — not just petting —
+with study points that unlock new cats, accessories, toys, food, and home
+decor to collect.
 
 This is a prototype, not a native macOS app — it runs in any browser and
 simulates the desktop (menu bar, dock, draggable windows) so the cat
@@ -38,9 +39,11 @@ Opening `index.html` directly via `file://` also works.
   once it's settled into a sit or a lie-down it holds that facing steady
   instead of flicking back and forth as the cursor passes by.
 - **Pat it.** Click/tap the cat for a quick pat: it squints happily and a
-  pixel-art heart floats up. This also records today's care streak, and
-  hides its hover-menu buttons the same way a click/drag does — they only
-  come back the next time you actually hover over the cat again.
+  pixel-art heart floats up. Purely a fun, cosmetic interaction — it hides
+  its hover-menu buttons the same way a click/drag does (they only come
+  back the next time you actually hover over the cat again), but doesn't
+  earn anything by itself; see **Start a study session** below for how
+  points actually work.
 - **"Mochi notices you."** Roughly once in 20 of its idle decisions, a cat
   interrupts its usual wandering to crouch (a 👀 pops up above its head),
   lunge a short distance toward whichever side of the screen your cursor is
@@ -48,7 +51,7 @@ Opening `index.html` directly via `file://` also works.
   your cursor keeps doing *something* — moving it around resets the clock
   indefinitely. Click the cat while it's mid-lunge or mid-bat and it
   "catches" your cursor instead of taking an ordinary pat — a distinct toast
-  and the same heart-and-streak credit as a pat. Leave the cursor dead still
+  and the same heart-spawning feedback as a pat. Leave the cursor dead still
   for a full 10 seconds, though, and it loses interest and walks off in the
   opposite direction instead of waiting around forever.
 - **Drag it.** Press and drag the cat (hovering alone never starts a drag) —
@@ -60,6 +63,11 @@ Opening `index.html` directly via `file://` also works.
 - **Window-perching.** While settled on top of a window, a cat occasionally
   reaches a paw down over the edge at whatever's on screen (the same 🐾
   swipe as the pounce-bat), every few seconds.
+- **Check your study session at a glance.** While a study or break session
+  is running (see below), hover over any cat to see a small live timer
+  float above it — time elapsed for a count-up session, or time left for a
+  count-down one. It's a status readout, not a per-cat thing: every cat
+  shows the same session.
 - **Hover over a cat** — five buttons "zoom out" above its head in two
   curved rows (closet/toybox/food along a shallow arc on the bottom —
   toybox lifted higher in the middle — pause/clipboard centered on a row
@@ -81,12 +89,12 @@ Opening `index.html` directly via `file://` also works.
     to play with it (it sits and wiggles the toy in place); tap 🧸 again to
     call the cat back — the toy stays behind on the desk, left out.
   - **🍗** opens that cat's food board. Drumstick is available from day one;
-    Fish, Canned Food, and Milk unlock with the streak. Tap an unlocked food
-    to feed it — it sits and eats for a few seconds, then leaves a poop
+    Fish, Canned Food, and Milk unlock with study points. Tap an unlocked
+    food to feed it — it sits and eats for a few seconds, then leaves a poop
     behind roughly a minute later, every time (regardless of Playful/Serious
     mode) — one poop per meal, never more, never fewer, and never one
-    without a feeding. Where it lands depends on the mode: see below.
-    Feeding counts as caring for it today, same as a pat.
+    without a feeding. Where it lands depends on the mode: see below. Like
+    patting, feeding is a cosmetic interaction — it doesn't earn points.
   - Clicking (to pat) or starting to drag the cat immediately clears all of
     these out of the way instead of leaving them floating mid-interaction —
     a pat keeps them hidden until you hover again, while dropping a drag
@@ -94,11 +102,16 @@ Opening `index.html` directly via `file://` also works.
 - **Open the full control panel** — now a normal floating, draggable app
   window (traffic-light title bar, centered on first open, remembers where
   you last dragged it) via the dock's paw icon:
-  - **Cats** — show/hide unlocked cats on the desktop; locked ones show what
-    streak milestone unlocks them.
-  - **Streak** — your current daily streak, the full milestone timeline, and
-    **prototype demo tools** to simulate the next day or a missed day so you
-    can preview the reward loop without waiting on real calendar days.
+  - **Cats** — show/hide unlocked cats on the desktop; locked ones show how
+    many study points unlock them.
+  - **Study** — this is the actual point of the app. Start a study or break
+    session (see **Start a study session** below), see your total study
+    points, the full unlock timeline, your recent session log, and
+    **prototype demo tools** to add points directly so you can preview the
+    reward loop without actually sitting through real study time.
+  - **Decor** — home decor pieces you've unlocked with study points; tap one
+    to place it on (or take it off) the desktop. Unlike closet items, decor
+    isn't per-cat — it's a shared piece of the desktop itself.
   - **Settings** — hide all cats, pause movement & interactions globally,
     toggle paw prints, and switch **Playful mode** on: every
     so often while a cat is out walking, it grabs one of its unlocked toys
@@ -113,17 +126,34 @@ Opening `index.html` directly via `file://` also works.
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
 
-## How the streak & rewards loop works
+## Start a study session
 
-- Patting a cat, or feeding it, at least once records today as cared-for.
-- Doing either on consecutive calendar days increases the streak by one;
-  doing it again the same day is a no-op; missing a day resets the streak
-  to zero on the next one.
-- Streak milestones unlock permanently:
-  - 3 / 10 / 14 / 21 / 45 / 60 / 100 days → closet accessories (hat, clothes, shoes, misc.)
-  - 5 / 18 / 35 days → toys
-  - 8 / 25 / 50 days → food (Fish, Canned Food, Milk) — Drumstick is free from day one
-  - 7 / 30 / 100 days → new cats (Shadow, Snowy, Celestial)
+The Study tab is where you actually earn points:
+
+1. Pick a kind — **📖 Study** or **☕ Break** — and a mode — **⏱ Count up**
+   (an open-ended stopwatch you stop yourself) or **⏳ Count down** (pick a
+   duration — 10/25/50/90 min for study, 5/10/15 min for break — and it
+   finishes on its own).
+2. Tap **Start**. The timer runs live in the panel, and hovering any cat on
+   the desktop shows the same timer floating above its head.
+3. Tap **End session** (or let a count-down session run out) to log it.
+
+## How studying earns points
+
+- **1 point per full 10 minutes** of a logged study session.
+- **1 point per full 5 minutes** of a logged break session.
+- Only whole units count — a 24-minute study session logs 2 points, not
+  2.4; ending a session under one full unit (e.g. an 8-minute study
+  session) still gets logged, just for 0 points.
+- Only one session can run at a time; ending it (manually, or automatically
+  for a count-down session) is what turns it into points and a study-log
+  entry — nothing is awarded while a session is still in progress.
+- Points unlock permanently, and never expire or get spent:
+  - 5 / 20 / 30 / 40 / 65 / 85 / 130 points → closet accessories (hat, clothes, shoes, misc.)
+  - 10 / 35 / 55 points → toys
+  - 15 / 45 / 75 points → food (Fish, Canned Food, Milk) — Drumstick is free from day one
+  - 12 / 25 / 45 / 70 / 100 points → home decor (plant, framed photo, cat bed, lamp, trophy shelf)
+  - 15 / 50 / 120 points → new cats (Shadow, Snowy, Celestial)
 - Everything persists in `localStorage`, so progress survives a reload.
 
 ## Implementation notes
@@ -177,13 +207,30 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   the normal pat handler into a distinct "catch" reaction instead. No
   literal eye/pupil tracking or crouch/pounce sprite art exists, so this is
   a flat-sprite approximation built from the existing sit pose, speed
-  override, and particle effects rather than new animation frames.
-- `js/streak.js` — streak, unlock, and settings persistence (`localStorage`),
-  including the day-advance debug helpers used by the Streak tab's demo
-  tools.
+  override, and particle effects rather than new animation frames. The live
+  session hover tooltip (`_renderSessionTooltip`) reads the shared
+  `StreakManager` session directly against the wall clock (`Date.now()`) on
+  every render, so it stays live even while hovering freezes the cat's own
+  pose — no separate ticking needed for it.
+- `js/streak.js` (object name `StreakManager`, kept from before this
+  feature's point-based rewrite) — owns study points, the session engine
+  (`startSession`/`endSession`/`tickSession`, one session at a time, global
+  rather than per-cat), the study log, unlocks for cats/accessories/toys/
+  food/decor, and settings persistence (`localStorage`, key
+  `pawprint_state_v2` — a new key, since the old day-streak schema doesn't
+  convert into this one). `tickSession()` is polled once a second from
+  `main.js` so a count-down session finishes itself even if the Study tab
+  isn't open; `debugAddPoints()` backs the Study tab's demo tools.
 - `js/windows.js` — minimal draggable fake app windows cats can perch on.
-- `js/ui.js` / `js/main.js` — control panel rendering and app bootstrap.
+- `js/ui.js` — control panel rendering: the cat roster, the Study tab
+  (session controls, live timer, points, milestone list, session log), the
+  Decor tab (place/un-place unlocked decor), and Settings.
+- `js/main.js` — app bootstrap; also renders whichever decor pieces are
+  "placed" onto `#decor-layer` at their fixed desktop spots (`DECOR` in
+  `js/catdata.js`), refreshed whenever an unlock or a placement toggle
+  could have changed what should be showing.
 
 Not implemented (out of scope for a prototype): a real macOS menu-bar
-background app, multi-monitor awareness, native window transparency, and
-actual purchase/earning mechanics beyond the streak-based unlocks.
+background app, multi-monitor awareness, native window transparency,
+dragging decor to a custom spot (each piece has one fixed position), and
+actual purchase/earning mechanics beyond the study-point-based unlocks.

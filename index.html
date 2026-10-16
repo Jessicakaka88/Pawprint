@@ -36,6 +36,9 @@
     <!-- Layer where draggable fake app windows live -->
     <div id="windows-layer"></div>
 
+    <!-- Unlocked home decor, placed/unplaced from the Decor tab -->
+    <div id="decor-layer"></div>
+
     <!-- Ground-level layer for fading paw prints -->
     <div id="trails-layer"></div>
 
@@ -72,34 +75,62 @@
 
     <nav class="panel-tabs">
       <button class="panel-tab active" data-tab="cats">Cats</button>
-      <button class="panel-tab" data-tab="streak">Streak</button>
+      <button class="panel-tab" data-tab="study">Study</button>
+      <button class="panel-tab" data-tab="decor">Decor</button>
       <button class="panel-tab" data-tab="settings">Settings</button>
     </nav>
 
     <section class="panel-body">
 
       <div class="panel-page" data-page="cats">
-        <p class="panel-hint">Tap a cat to show or hide it on your desktop. Locked cats unlock at streak milestones. Hover a cat on the desktop and tap 🧥 to open its closet.</p>
+        <p class="panel-hint">Tap a cat to show or hide it on your desktop. Locked cats unlock with study points. Hover a cat on the desktop and tap 🧥 to open its closet.</p>
         <div id="cat-roster" class="cat-roster"></div>
       </div>
 
-      <div class="panel-page" data-page="streak" hidden>
-        <div class="streak-hero">
-          <div class="streak-flame" id="streak-flame">🔥</div>
-          <div class="streak-count" id="streak-count">0</div>
-          <div class="streak-label">day streak</div>
+      <div class="panel-page" data-page="study" hidden>
+        <div class="points-hero">
+          <div class="points-icon">⭐</div>
+          <div class="points-count" id="points-count">0</div>
+          <div class="points-label">study points</div>
         </div>
-        <p class="panel-hint" id="streak-status">Pat a cat today to start your streak.</p>
+        <p class="panel-hint">1 point per 10 minutes logged studying, 1 point per 5 minutes logged on break. Hover a cat on the desktop to see the live session timer.</p>
+
+        <div class="session-box" id="session-box">
+          <div class="session-kind-toggle" id="session-kind-toggle">
+            <button type="button" class="session-toggle-btn active" data-kind="study">📖 Study</button>
+            <button type="button" class="session-toggle-btn" data-kind="break">☕ Break</button>
+          </div>
+          <div class="session-mode-toggle" id="session-mode-toggle">
+            <button type="button" class="session-toggle-btn active" data-mode="countup">⏱ Count up</button>
+            <button type="button" class="session-toggle-btn" data-mode="countdown">⏳ Count down</button>
+          </div>
+          <select id="session-duration" class="session-duration"></select>
+          <div class="session-timer" id="session-timer">00:00</div>
+          <div class="session-timer-label" id="session-timer-label">No session running</div>
+          <button type="button" class="session-main-btn" id="session-main-btn">▶ Start studying</button>
+        </div>
+
         <div class="milestone-list" id="milestone-list"></div>
+
+        <div class="study-log-box">
+          <div class="debug-title">Study log</div>
+          <div class="study-log-list" id="study-log-list"></div>
+        </div>
+
         <div class="debug-box">
           <div class="debug-title">Prototype demo tools</div>
-          <p class="panel-hint small">Streaks normally advance once per real day. Use these to preview the reward loop quickly.</p>
+          <p class="panel-hint small">Earning points normally takes real logged study/break time. Use these to preview the reward loop quickly.</p>
           <div class="debug-actions">
-            <button id="debug-next-day">⏭ Simulate next day</button>
-            <button id="debug-miss-day">💤 Simulate missed day</button>
+            <button id="debug-add-10">⭐ +10 points</button>
+            <button id="debug-add-50">⭐ +50 points</button>
             <button id="debug-reset">↺ Reset progress</button>
           </div>
         </div>
+      </div>
+
+      <div class="panel-page" data-page="decor" hidden>
+        <p class="panel-hint">Collect home decor with study points, then tap a piece to place it on (or take it off) your desktop.</p>
+        <div id="decor-grid" class="decor-grid"></div>
       </div>
 
       <div class="panel-page" data-page="settings" hidden>

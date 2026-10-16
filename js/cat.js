@@ -11,6 +11,14 @@ document.addEventListener("pointermove", (e) => {
   lastCursorActivityAt = performance.now();
 });
 
+// mm:ss, used by the per-cat hover session tooltip.
+function formatSessionClock(ms) {
+  const totalSec = Math.max(0, Math.floor(ms / 1000));
+  const m = Math.floor(totalSec / 60);
+  const s = totalSec % 60;
+  return String(m).padStart(2, "0") + ":" + String(s).padStart(2, "0");
+}
+
 // Pink pixel-art heart shown above a cat's head when it's patted.
 // Grid: X = heart, outline/shade/highlight are derived from neighbours.
 const PIXEL_HEART_SVG = (() => {
@@ -70,7 +78,7 @@ const PIXEL_Z_SVG = (() => {
 class Cat {
   constructor(def, world) {
     this.def = def;           // {id, name, palette}
-    this.world = world;       // callbacks: onPat(result), getSettings(), getEquipped(id), getWindowRects()
+    this.world = world;       // callbacks: toast(), getSettings(), getEquipped(id), getWindowRects()
     this.facing = 1;          // 1 = right, -1 = left
     this.lastWalkFacing = 1;  // facing as of the last time it actually walked; sit/lie lock onto this
     this.x = 140 + Math.random() * 300;      // center x
@@ -115,11 +123,22 @@ class Cat {
     this._buildDom();
     this._wireInput();
     this._wireDropZone();
+    this._buildSessionTooltip();
     this._buildHoverMenu();
     this._buildClipboardPanel();
     this._buildClosetPanel();
     this._buildToyboxPanel();
     this._buildFoodPanel();
+  }
+
+  // A small floating label, shown only while hovering and only while a
+  // study/break session is running, with the live elapsed/remaining time —
+  // "hover over the cat to see how long you've been studying."
+  _buildSessionTooltip() {
+    const el = document.createElement("div");
+    el.className = "cat-session-tooltip";
+    document.getElementById("cats-layer").appendChild(el);
+    this.sessionTooltipEl = el;
   }
 
   groundFootY() {
@@ -369,12 +388,14 @@ class Cat {
     const show = () => {
       clearTimeout(this._hoverHideTimer);
       menu.classList.add("show");
+      this.sessionTooltipEl.classList.add("show");
       this.hoverPaused = true;
     };
     const scheduleHide = () => {
       clearTimeout(this._hoverHideTimer);
       this._hoverHideTimer = setTimeout(() => {
         menu.classList.remove("show");
+        this.sessionTooltipEl.classList.remove("show");
         this.hoverPaused = false;
       }, 260);
     };
@@ -399,6 +420,7 @@ class Cat {
   _hideFloatingMenus() {
     clearTimeout(this._hoverHideTimer);
     this.hoverMenuEl.classList.remove("show");
+    this.sessionTooltipEl.classList.remove("show");
     this.hoverPaused = false;
     this.clipboardPanelOpen = false;
     this.clipboardPanelEl.classList.remove("show");
@@ -546,7 +568,7 @@ class Cat {
     if (!items.length) {
       const empty = document.createElement("div");
       empty.className = "closet-panel-empty";
-      empty.textContent = "Nothing here yet — keep up the streak to unlock more.";
+      empty.textContent = "Nothing here yet — earn more study points to unlock more.";
       grid.appendChild(empty);
     }
 
@@ -559,7 +581,7 @@ class Cat {
       item.innerHTML = `
         <div class="closet-panel-item-glyph">${acc.glyph}</div>
         <div class="closet-panel-item-name">${acc.name}</div>
-        <div class="closet-panel-item-req">${unlocked ? (equipped ? "Equipped ✓" : "Tap to equip") : `${milestone.unlockDays}-day streak`}</div>
+        <div class="closet-panel-item-req">${unlocked ? (equipped ? "Equipped ✓" : "Tap to equip") : `${milestone.unlockPoints} study points`}</div>
       `;
       if (unlocked) {
         item.addEventListener("click", () => {
@@ -616,7 +638,7 @@ class Cat {
     if (!unlockedToys.length) {
       const empty = document.createElement("div");
       empty.className = "closet-panel-empty";
-      empty.textContent = "No toys yet — keep up the streak to unlock some.";
+      empty.textContent = "No toys yet — earn more study points to unlock some.";
       grid.appendChild(empty);
     }
 
@@ -628,7 +650,7 @@ class Cat {
       item.innerHTML = `
         <div class="closet-panel-item-glyph">${toy.glyph}</div>
         <div class="closet-panel-item-name">${toy.name}</div>
-        <div class="closet-panel-item-req">${unlocked ? "Tap to play" : `${milestone.unlockDays}-day streak`}</div>
+        <div class="closet-panel-item-req">${unlocked ? "Tap to play" : `${milestone.unlockPoints} study points`}</div>
       `;
       if (unlocked) {
         item.addEventListener("click", () => this._startPlay(id));
@@ -716,7 +738,7 @@ class Cat {
       item.innerHTML = `
         <div class="closet-panel-item-glyph">${food.glyph}</div>
         <div class="closet-panel-item-name">${food.name}</div>
-        <div class="closet-panel-item-req">${unlocked ? "Tap to feed" : `${milestone.unlockDays}-day streak`}</div>
+        <div class="closet-panel-item-req">${unlocked ? "Tap to feed" : `${milestone.unlockPoints} study points`}</div>
       `;
       if (unlocked) {
         item.addEventListener("click", () => this._feed(id));
@@ -781,8 +803,8 @@ class Cat {
 
   // Feeding this cat a chosen unlocked food (from its food board) sits it
   // down to eat; only a cat that's actually eaten will leave a poop behind,
-  // about a minute later. Counts as caring for it today, same as a pat —
-  // feeding is interacting with your cat too, not just a free side effect.
+  // about a minute later. Purely cosmetic now — progress comes from logged
+  // study/break sessions, not from interacting with the cat.
   _feed(foodId) {
     if (this.dragging || this.eating) return;
     const food = FOODS[foodId] || FOODS.drumstick;
@@ -805,7 +827,6 @@ class Cat {
     document.getElementById("cats-layer").appendChild(el);
     this.eatingEl = el;
     this.hoverFoodBtn.classList.add("active");
-    this.world.onPat(this.def.id);
   }
 
   _finishEating() {
@@ -913,7 +934,6 @@ class Cat {
     this.queue = [];
     this.currentStep = null;
     this._spawnHearts();
-    this.world.onPat(this.def.id);
   }
 
   _catchCursor() {
@@ -924,7 +944,6 @@ class Cat {
     this.currentStep = null;
     this._spawnHearts();
     this.world.toast(`${this.def.name} catches it! 🎯`, { icon: "🐾" });
-    this.world.onPat(this.def.id);
   }
 
   _spawnHearts() {
@@ -1376,12 +1395,36 @@ class Cat {
     this._renderFloatingUI(frame);
   }
 
+  // Live "how long left / how long studying" label, positioned above the
+  // hover menu — only ever visible while hovering (see _buildHoverMenu's
+  // show/scheduleHide) and only has anything to say while a study/break
+  // session is actually running.
+  _renderSessionTooltip(headY) {
+    const session = StreakManager.get().activeSession;
+    this.sessionTooltipEl.hidden = !session;
+    if (!session) return;
+    const elapsedMs = Date.now() - session.startedAt;
+    const kindLabel = session.kind === "study" ? "📖 Studying" : "☕ On break";
+    let text;
+    if (session.mode === "countdown") {
+      const remainingMs = Math.max(0, session.durationMinutes * 60000 - elapsedMs);
+      text = `${kindLabel} — ${formatSessionClock(remainingMs)} left`;
+    } else {
+      text = `${kindLabel} — ${formatSessionClock(elapsedMs)} elapsed`;
+    }
+    this.sessionTooltipEl.textContent = text;
+    this.sessionTooltipEl.style.left = Math.round(this.x) + "px";
+    this.sessionTooltipEl.style.top = Math.round(headY - 100) + "px";
+  }
+
   _renderFloatingUI(frame) {
     // Anchor the hover menu at a stable point near the head, regardless of
     // which pose/frame is currently showing, so it doesn't jitter.
     const headY = this.footY - SPRITEART.sitSize().h * 0.78;
     this.hoverMenuEl.style.left = Math.round(this.x) + "px";
     this.hoverMenuEl.style.top = Math.round(headY) + "px";
+
+    this._renderSessionTooltip(headY);
 
     const clipCount = this.clipboard.length;
     this.hoverClipBtn.classList.toggle("has-items", clipCount > 0);
@@ -1480,6 +1523,7 @@ class Cat {
     if (this.carryToyEl) this.carryToyEl.remove();
     if (this.eatingEl) this.eatingEl.remove();
     this.hoverMenuEl.remove();
+    this.sessionTooltipEl.remove();
     this.clipboardPanelEl.remove();
     this.closetPanelEl.remove();
     this.toyboxPanelEl.remove();

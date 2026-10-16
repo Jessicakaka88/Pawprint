@@ -1,32 +1,34 @@
 /*
- * StreakManager — owns all persisted progress: streak count, last-pat date,
- * unlocked cats/accessories, equipped accessories, and user settings.
+ * StreakManager — owns all persisted progress: study points, the study
+ * log, the in-progress study/break session (if any), unlocked
+ * cats/accessories/toys/food/decor, equipped accessories, placed decor,
+ * and user settings.
  *
- * Dates are tracked as "day numbers" (days since epoch) rather than
- * timestamps so day-rollover logic is simple integer math. A small
- * `dayOffset` lets the prototype's debug tools simulate the passage of
- * days without waiting for a real midnight — everything else behaves the
- * exact same way a real day boundary would.
+ * Points come from logged study/break time rather than daily interaction:
+ * every full 10 minutes of a "study" session is worth 1 point, and every
+ * full 5 minutes of a "break" session is worth 1 point. A session can
+ * count up (an open-ended stopwatch, stopped manually) or count down (a
+ * chosen duration, finishing on its own).
  */
 
 const StreakManager = (() => {
-  const STORAGE_KEY = "pawprint_state_v1";
-  const MS_PER_DAY = 24 * 60 * 60 * 1000;
+  const STORAGE_KEY = "pawprint_state_v2";
 
   let state;
 
   function defaultState() {
     return {
-      streak: 0,
-      longestStreak: 0,
-      lastPatDay: null,       // day number of the last day the cat was patted
-      dayOffset: 0,           // debug-only: simulated days added on top of real time
+      points: 0,
+      studyLog: [],            // [{id, kind:'study'|'break', mode, minutes, points, endedAt}], newest first
+      activeSession: null,     // {kind, mode, durationMinutes, startedAt} or null
       unlockedCats: ["mochi"],
       activeCats: ["mochi"],
       unlockedAccessories: [],
       unlockedToys: [],
       unlockedFoods: ["drumstick"],
-      equipped: {},           // catId -> [accessoryId,...]
+      unlockedDecor: [],
+      placedDecor: [],         // unlocked decor ids currently shown on the desktop
+      equipped: {},             // catId -> [accessoryId,...]
       settings: { hidden: false, paused: false, trails: true, playful: false },
       seenMilestones: [],
     };
@@ -46,48 +48,68 @@ const StreakManager = (() => {
     try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
   }
 
-  function todayDayNumber() {
-    return Math.floor(Date.now() / MS_PER_DAY) + (state.dayOffset || 0);
-  }
-
   function get() { return state; }
 
-  // Returns { streak, isNewToday, milestonesHit: [...] }
-  function recordPat() {
-    const today = todayDayNumber();
-    if (state.lastPatDay === today) {
-      return { streak: state.streak, isNewToday: false, milestonesHit: [] };
-    }
-    if (state.lastPatDay === today - 1) {
-      state.streak += 1; // continued the streak
-    } else {
-      state.streak = 1; // first pat ever, or the streak had already lapsed
-    }
-    state.lastPatDay = today;
-    state.longestStreak = Math.max(state.longestStreak, state.streak);
-    const milestonesHit = applyMilestones();
+  // Starts a new study or break session. Refuses if one is already running
+  // (stop it first) — returns the new session, or null if refused.
+  function startSession(kind, mode, durationMinutes) {
+    if (state.activeSession) return null;
+    state.activeSession = {
+      kind,                                   // "study" | "break"
+      mode,                                   // "countup" | "countdown"
+      durationMinutes: mode === "countdown" ? durationMinutes : null,
+      startedAt: Date.now(),
+    };
     save();
-    return { streak: state.streak, isNewToday: true, milestonesHit };
+    return state.activeSession;
   }
 
-  // Call on load to see if a day (or more) was missed since the last pat,
-  // resetting the streak to 0 if so. Does not mutate lastPatDay.
-  function checkForLapse() {
-    if (state.lastPatDay == null) return false;
-    const today = todayDayNumber();
-    if (today - state.lastPatDay >= 2) {
-      state.streak = 0;
-      save();
-      return true;
-    }
-    return false;
+  // Turns the elapsed time of the active session into points (1 per full
+  // 10 minutes studied, 1 per full 5 minutes on break), logs it, clears
+  // the session, and applies any milestones that just got crossed.
+  function _finalizeSession() {
+    const s = state.activeSession;
+    if (!s) return null;
+    const elapsedMs = Date.now() - s.startedAt;
+    const minutes = Math.max(0, Math.floor(elapsedMs / 60000));
+    const unit = s.kind === "study" ? 10 : 5;
+    const pointsEarned = Math.floor(minutes / unit);
+    state.points += pointsEarned;
+    const entry = {
+      id: "s" + Math.random().toString(36).slice(2, 9),
+      kind: s.kind, mode: s.mode, minutes, points: pointsEarned,
+      endedAt: Date.now(),
+    };
+    state.studyLog.unshift(entry);
+    state.studyLog = state.studyLog.slice(0, 50); // keep recent history only
+    state.activeSession = null;
+    const milestonesHit = applyMilestones();
+    save();
+    return { entry, milestonesHit, totalPoints: state.points };
+  }
+
+  // Ends the active session right now (manual stop) — same accounting as
+  // letting a count-down session run out.
+  function endSession() {
+    return _finalizeSession();
+  }
+
+  // Call periodically (see main.js) so a count-down session finishes itself
+  // once its time is up. Returns the finalize result if it just completed,
+  // null otherwise (nothing to do yet, or no session running).
+  function tickSession() {
+    const s = state.activeSession;
+    if (!s || s.mode !== "countdown") return null;
+    const elapsedMs = Date.now() - s.startedAt;
+    if (elapsedMs >= s.durationMinutes * 60000) return _finalizeSession();
+    return null;
   }
 
   function applyMilestones() {
     const hits = [];
     MILESTONES.forEach((m) => {
       const key = `${m.kind}:${m.refId}`;
-      if (state.streak >= m.days && !state.seenMilestones.includes(key)) {
+      if (state.points >= m.points && !state.seenMilestones.includes(key)) {
         state.seenMilestones.push(key);
         if (m.kind === "cat" && !state.unlockedCats.includes(m.refId)) {
           state.unlockedCats.push(m.refId);
@@ -100,6 +122,9 @@ const StreakManager = (() => {
         }
         if (m.kind === "food" && !state.unlockedFoods.includes(m.refId)) {
           state.unlockedFoods.push(m.refId);
+        }
+        if (m.kind === "decor" && !state.unlockedDecor.includes(m.refId)) {
+          state.unlockedDecor.push(m.refId);
         }
         hits.push(m);
       }
@@ -122,22 +147,24 @@ const StreakManager = (() => {
     save();
   }
 
+  function togglePlacedDecor(decorId) {
+    if (!state.unlockedDecor.includes(decorId)) return;
+    const idx = state.placedDecor.indexOf(decorId);
+    if (idx === -1) state.placedDecor.push(decorId); else state.placedDecor.splice(idx, 1);
+    save();
+  }
+
   function setSetting(key, value) {
     state.settings[key] = value;
     save();
   }
 
   // ---- Debug/demo helpers --------------------------------------------------
-  function debugAdvanceDay() {
-    state.dayOffset = (state.dayOffset || 0) + 1;
-    checkForLapse();
+  function debugAddPoints(amount) {
+    state.points += amount;
+    const milestonesHit = applyMilestones();
     save();
-  }
-
-  function debugMissDay() {
-    state.dayOffset = (state.dayOffset || 0) + 2; // skip a day entirely
-    checkForLapse();
-    save();
+    return { milestonesHit, totalPoints: state.points };
   }
 
   function debugReset() {
@@ -146,10 +173,10 @@ const StreakManager = (() => {
   }
 
   load();
-  checkForLapse();
 
   return {
-    get, recordPat, setActiveCat, toggleEquip, setSetting,
-    debugAdvanceDay, debugMissDay, debugReset, todayDayNumber,
+    get, startSession, endSession, tickSession,
+    setActiveCat, toggleEquip, togglePlacedDecor, setSetting,
+    debugAddPoints, debugReset,
   };
 })();

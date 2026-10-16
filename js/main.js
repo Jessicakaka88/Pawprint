@@ -7,11 +7,6 @@
     getSettings: () => StreakManager.get().settings,
     getWindowRects: () => WindowManager.visibleRects(),
     getEquipped: (catId) => StreakManager.get().equipped[catId] || [],
-    onPat: (catId) => {
-      const result = StreakManager.recordPat();
-      UI.onPatResult(result);
-      return result;
-    },
     toast: (message, opts) => UI.toast(message, opts),
     toggleEquip: (catId, accessoryId) => StreakManager.toggleEquip(catId, accessoryId),
     getUnlockedToys: () => StreakManager.get().unlockedToys,
@@ -40,6 +35,33 @@
     el.textContent = d.toLocaleTimeString([], { hour: "numeric", minute: "2-digit" });
   }
 
+  // Renders whichever unlocked decor pieces are currently "placed" onto the
+  // desktop at their fixed spots (see DECOR in catdata.js).
+  function renderDecorOnDesktop() {
+    const layer = document.getElementById("decor-layer");
+    layer.innerHTML = "";
+    StreakManager.get().placedDecor.forEach((id) => {
+      const item = DECOR[id];
+      if (!item) return;
+      const el = document.createElement("div");
+      el.className = "decor-placed";
+      el.textContent = item.glyph;
+      Object.assign(el.style, item.pos);
+      layer.appendChild(el);
+    });
+  }
+
+  // Keeps a running count-down session honest even if the Study tab isn't
+  // open, and refreshes the live timer text while it is.
+  function tickStudySession() {
+    const result = StreakManager.tickSession();
+    if (result) {
+      UI.onSessionFinished(result);
+    } else {
+      UI.renderStudy();
+    }
+  }
+
   function wireDock() {
     document.querySelectorAll(".dock-icon[data-app]").forEach((icon) => {
       icon.addEventListener("click", () => WindowManager.create(icon.dataset.app));
@@ -57,10 +79,12 @@
   function init() {
     WindowManager.init();
     wireDock();
-    UI.init({ onRosterChangeCb: syncActiveCats });
+    UI.init({ onRosterChangeCb: () => { syncActiveCats(); renderDecorOnDesktop(); } });
     syncActiveCats();
+    renderDecorOnDesktop();
     tickClock();
     setInterval(tickClock, 15000);
+    setInterval(tickStudySession, 1000);
     requestAnimationFrame(loop);
 
     window.addEventListener("resize", () => {

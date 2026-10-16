@@ -765,15 +765,15 @@ class Cat {
   }
 
   // Only ever fires after a feeding scheduled it — a cat that was never fed
-  // never poops.
+  // never poops. Shows up right behind the cat's butt, wherever it happens
+  // to be standing a minute or so later, not just anywhere on the screen.
   _maybeDropPoop(settings, now) {
     if (this._poopAt == null || now < this._poopAt) return;
     this._poopAt = null;
     if (!settings.playful) return; // Serious mode stays mess-free even after a feeding
-    const margin = 20;
-    const mx = margin + Math.random() * (window.innerWidth - margin * 2);
-    const my = 50 + Math.random() * (window.innerHeight - 140);
-    this._spawnMessItem("💩", mx, my, "Cleaned up after your cat 🧹");
+    const { w } = SPRITEART.sitSize();
+    const poopX = this.x + (this.facing === 1 ? -w * 0.45 : w * 0.45);
+    this._spawnMessItem("💩", poopX, this.footY - 10, "Cleaned up after your cat 🧹");
   }
 
   // Shared "left behind, click to pick up" item — used for a dropped toy

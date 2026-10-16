@@ -131,7 +131,7 @@ class Cat {
     this.eating = false;           // sat down and eating fed food (frozen, animated)
     this.eatingEl = null;
     this._eatUntil = 0;
-    this._poopAt = null;           // when a poop should appear, set only after a feeding
+    this._pendingPoops = [];       // one timestamp queued per feeding — every meal gets exactly one poop
     this._hoverHideTimer = null;
     this._wasFrozen = false;       // edge-detects entering a hard-paused (sit-snap) state
     this._wasHoverFrozen = false;  // edge-detects entering a hover freeze (no pose change)
@@ -761,16 +761,20 @@ class Cat {
     if (this.eatingEl) { this.eatingEl.remove(); this.eatingEl = null; }
     this.hoverFoodBtn.classList.remove("active");
     this.currentStep = { type: "idle", ms: 300 };
-    this._poopAt = performance.now() + 60000 + Math.random() * 30000; // shows up roughly a minute later
+    // Queued, not overwritten — a feeding while an earlier one's poop is
+    // still pending gets its own entry instead of silently replacing it,
+    // so every meal reliably produces exactly one poop, never zero, never
+    // more than one.
+    this._pendingPoops.push(performance.now() + 60000 + Math.random() * 30000); // roughly a minute later
   }
 
-  // Only ever fires after a feeding scheduled it — a cat that was never fed
-  // never poops. Shows up right behind the cat's butt, wherever it happens
-  // to be standing a minute or so later, not just anywhere on the screen.
-  _maybeDropPoop(settings, now) {
-    if (this._poopAt == null || now < this._poopAt) return;
-    this._poopAt = null;
-    if (!settings.playful) return; // Serious mode stays mess-free even after a feeding
+  // One poop per feeding, full stop — always shows up (no mode gate), and
+  // never more than the number of meals eaten. Lands right behind the
+  // cat's butt, wherever it happens to be standing when it's due, not just
+  // anywhere on the screen.
+  _maybeDropPoop(now) {
+    if (!this._pendingPoops.length || now < this._pendingPoops[0]) return;
+    this._pendingPoops.shift();
     const { w } = SPRITEART.sitSize();
     const poopX = this.x + (this.facing === 1 ? -w * 0.45 : w * 0.45);
     this._spawnMessItem("💩", poopX, this.footY - 10, "Cleaned up after your cat 🧹");
@@ -1041,7 +1045,7 @@ class Cat {
 
     this._updateCursorGlance();
     this._maybeStartCarryingToy(settings, now);
-    this._maybeDropPoop(settings, now);
+    this._maybeDropPoop(now);
 
     if (!this.currentStep) {
       if (this.queue.length === 0) this._planNext();

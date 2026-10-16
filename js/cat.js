@@ -769,15 +769,23 @@ class Cat {
   }
 
   // One poop per feeding, full stop — always shows up (no mode gate), and
-  // never more than the number of meals eaten. Lands right behind the
-  // cat's butt, wherever it happens to be standing when it's due, not just
-  // anywhere on the screen.
-  _maybeDropPoop(now) {
+  // never more than the number of meals eaten. Where it lands depends on
+  // the mode: scattered anywhere on the desktop in Playful mode (like the
+  // toys a wandering cat leaves behind), or always the same out-of-the-way
+  // spot in Serious mode, which otherwise leaves nothing lying around.
+  _maybeDropPoop(settings, now) {
     if (!this._pendingPoops.length || now < this._pendingPoops[0]) return;
     this._pendingPoops.shift();
-    const { w } = SPRITEART.sitSize();
-    const poopX = this.x + (this.facing === 1 ? -w * 0.45 : w * 0.45);
-    this._spawnMessItem("💩", poopX, this.footY - 10, "Cleaned up after your cat 🧹");
+    if (settings.playful) {
+      const margin = 20;
+      const mx = margin + Math.random() * (window.innerWidth - margin * 2);
+      const my = 50 + Math.random() * (window.innerHeight - 140);
+      this._spawnMessItem("💩", mx, my, "Cleaned up after your cat 🧹");
+    } else {
+      const cornerX = 36 + (Math.random() * 12 - 6);
+      const cornerY = window.innerHeight - 40 + (Math.random() * 12 - 6);
+      this._spawnMessItem("💩", cornerX, cornerY, "Cleaned up after your cat 🧹");
+    }
   }
 
   // Shared "left behind, click to pick up" item — used for a dropped toy
@@ -1045,7 +1053,7 @@ class Cat {
 
     this._updateCursorGlance();
     this._maybeStartCarryingToy(settings, now);
-    this._maybeDropPoop(now);
+    this._maybeDropPoop(settings, now);
 
     if (!this.currentStep) {
       if (this.queue.length === 0) this._planNext();

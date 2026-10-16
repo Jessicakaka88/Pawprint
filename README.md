@@ -67,9 +67,10 @@ Opening `index.html` directly via `file://` also works.
     to play with it (it sits and wiggles the toy in place); tap 🧸 again to
     call the cat back — the toy stays behind on the desk, left out.
   - **🍗** feeds the cat — it sits and eats for a few seconds, then leaves a
-    poop behind right behind its butt roughly a minute later, every time
-    (regardless of Playful/Serious mode) — one poop per meal, never more,
-    never fewer, and never one without a feeding.
+    poop behind roughly a minute later, every time (regardless of
+    Playful/Serious mode) — one poop per meal, never more, never fewer, and
+    never one without a feeding. Where it lands depends on the mode: see
+    below.
   - Clicking (to pat) or starting to drag the cat immediately clears all of
     these out of the way instead of leaving them floating mid-interaction —
     a pat keeps them hidden until you hover again, while dropping a drag
@@ -87,9 +88,11 @@ Opening `index.html` directly via `file://` also works.
     so often while a cat is out walking, it grabs one of its unlocked toys
     and carries it around in its mouth, playing with it for 10–20 seconds,
     then leaves it behind wherever it ends up — never just teleported to a
-    random spot. **Serious mode** (the default) keeps cats just walking
-    around without picking up toys on their own; feeding and its resulting
-    poop work the same in either mode.
+    random spot — and a fed cat's poop can land anywhere on the desktop.
+    **Serious mode** (the default) keeps cats just walking around without
+    picking up toys on their own; feeding still works the same, but its
+    poop always lands in the same out-of-the-way spot in the bottom-left
+    corner instead of scattering around.
 - **Drag the fake windows** by their title bars — cats treat them as real
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
@@ -127,11 +130,12 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   "clipboard" (native `dragover`/`drop` to save a file or dragged text,
   `DownloadURL`/Clipboard API to take it back out), the toy box ("playing"
   freezes the cat next to an animated toy sprite until called back), feeding
-  (sits and "eats" for a few seconds, then queues a poop right behind its
-  butt roughly a minute later — a list of pending poop timestamps rather
-  than a single one, so repeated feedings each get their own poop instead
-  of one overwriting another's), and playful-mode toy-carrying: a walking
-  cat occasionally grabs an unlocked
+  (sits and "eats" for a few seconds, then queues a poop roughly a minute
+  later — a list of pending poop timestamps rather than a single one, so
+  repeated feedings each get their own poop instead of one overwriting
+  another's — scattered anywhere on the desktop in Playful mode or always
+  the same bottom-left spot in Serious mode), and playful-mode toy-carrying:
+  a walking cat occasionally grabs an unlocked
   toy, follows it along near its
   mouth for 10-20s, then leaves it behind as a normal pick-up-able item right
   where the cat ends up. While perched, a

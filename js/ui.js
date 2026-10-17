@@ -259,7 +259,7 @@ const UI = (() => {
     toast(
       pts > 0
         ? `Session logged: +${pts} point${pts === 1 ? "" : "s"} ⭐`
-        : `Session logged (under ${result.entry.kind === "study" ? "10" : "5"} min — no points this time).`,
+        : `Session logged (under ${result.entry.kind === "study" ? "30" : "5"} min — no points this time).`,
       { icon: result.entry.kind === "study" ? "📖" : "☕" }
     );
     (result.milestonesHit || []).forEach((m) => {

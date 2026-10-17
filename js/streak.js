@@ -5,8 +5,8 @@
  * and user settings.
  *
  * Points come from logged study/break time rather than daily interaction:
- * every full 10 minutes of a "study" session is worth 1 point, and every
- * full 5 minutes of a "break" session is worth 1 point. A session can
+ * every full 30 minutes of a "study" session is worth 1 point, and every
+ * full 5 minutes of a "break" session is worth 0.5 points. A session can
  * count up (an open-ended stopwatch, stopped manually) or count down (a
  * chosen duration, finishing on its own).
  */
@@ -28,6 +28,7 @@ const StreakManager = (() => {
       unlockedFoods: ["drumstick"],
       unlockedDecor: [],
       placedDecor: [],         // unlocked decor ids currently shown on the desktop
+      decorPositions: {},      // decorId -> {left,top} once dragged to a custom spot (else DECOR[id].pos)
       equipped: {},             // catId -> [accessoryId,...]
       settings: { hidden: false, paused: false, trails: true, playful: false },
       seenMilestones: [],
@@ -65,15 +66,16 @@ const StreakManager = (() => {
   }
 
   // Turns the elapsed time of the active session into points (1 per full
-  // 10 minutes studied, 1 per full 5 minutes on break), logs it, clears
+  // 30 minutes studied, 0.5 per full 5 minutes on break), logs it, clears
   // the session, and applies any milestones that just got crossed.
   function _finalizeSession() {
     const s = state.activeSession;
     if (!s) return null;
     const elapsedMs = Date.now() - s.startedAt;
     const minutes = Math.max(0, Math.floor(elapsedMs / 60000));
-    const unit = s.kind === "study" ? 10 : 5;
-    const pointsEarned = Math.floor(minutes / unit);
+    const unitMinutes = s.kind === "study" ? 30 : 5;
+    const pointsPerUnit = s.kind === "study" ? 1 : 0.5;
+    const pointsEarned = Math.floor(minutes / unitMinutes) * pointsPerUnit;
     state.points += pointsEarned;
     const entry = {
       id: "s" + Math.random().toString(36).slice(2, 9),
@@ -154,6 +156,13 @@ const StreakManager = (() => {
     save();
   }
 
+  // Remembers a custom desktop spot a placed decor piece was dragged to,
+  // overriding its default catalog position from then on.
+  function setDecorPosition(decorId, pos) {
+    state.decorPositions[decorId] = pos;
+    save();
+  }
+
   function setSetting(key, value) {
     state.settings[key] = value;
     save();
@@ -176,7 +185,7 @@ const StreakManager = (() => {
 
   return {
     get, startSession, endSession, tickSession,
-    setActiveCat, toggleEquip, togglePlacedDecor, setSetting,
+    setActiveCat, toggleEquip, togglePlacedDecor, setDecorPosition, setSetting,
     debugAddPoints, debugReset,
   };
 })();

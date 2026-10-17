@@ -11,7 +11,7 @@ document.addEventListener("pointermove", (e) => {
   lastCursorActivityAt = performance.now();
 });
 
-// mm:ss, used by the per-cat hover session tooltip.
+// mm:ss, used by the per-cat live session label.
 function formatSessionClock(ms) {
   const totalSec = Math.max(0, Math.floor(ms / 1000));
   const m = Math.floor(totalSec / 60);
@@ -131,9 +131,8 @@ class Cat {
     this._buildFoodPanel();
   }
 
-  // A small floating label, shown only while hovering and only while a
-  // study/break session is running, with the live elapsed/remaining time —
-  // "hover over the cat to see how long you've been studying."
+  // A small frosted-glass label that floats above the head for as long as
+  // a study/break session is running, with the live elapsed/remaining time.
   _buildSessionTooltip() {
     const el = document.createElement("div");
     el.className = "cat-session-tooltip";
@@ -388,14 +387,12 @@ class Cat {
     const show = () => {
       clearTimeout(this._hoverHideTimer);
       menu.classList.add("show");
-      this.sessionTooltipEl.classList.add("show");
       this.hoverPaused = true;
     };
     const scheduleHide = () => {
       clearTimeout(this._hoverHideTimer);
       this._hoverHideTimer = setTimeout(() => {
         menu.classList.remove("show");
-        this.sessionTooltipEl.classList.remove("show");
         this.hoverPaused = false;
       }, 260);
     };
@@ -420,7 +417,6 @@ class Cat {
   _hideFloatingMenus() {
     clearTimeout(this._hoverHideTimer);
     this.hoverMenuEl.classList.remove("show");
-    this.sessionTooltipEl.classList.remove("show");
     this.hoverPaused = false;
     this.clipboardPanelOpen = false;
     this.clipboardPanelEl.classList.remove("show");
@@ -1396,13 +1392,17 @@ class Cat {
   }
 
   // Live "how long left / how long studying" label, positioned above the
-  // hover menu — only ever visible while hovering (see _buildHoverMenu's
-  // show/scheduleHide) and only has anything to say while a study/break
-  // session is actually running.
+  // always floating above the head — not hover-gated — for as long as a
+  // study/break session is actually running; hidden entirely otherwise.
   _renderSessionTooltip(headY) {
     const session = StreakManager.get().activeSession;
-    this.sessionTooltipEl.hidden = !session;
-    if (!session) return;
+    if (!session) {
+      this.sessionTooltipEl.classList.remove("show");
+      this.sessionTooltipEl.hidden = true;
+      return;
+    }
+    this.sessionTooltipEl.hidden = false;
+    this.sessionTooltipEl.classList.add("show");
     const elapsedMs = Date.now() - session.startedAt;
     const kindLabel = session.kind === "study" ? "📖 Studying" : "☕ On break";
     let text;
@@ -1414,7 +1414,7 @@ class Cat {
     }
     this.sessionTooltipEl.textContent = text;
     this.sessionTooltipEl.style.left = Math.round(this.x) + "px";
-    this.sessionTooltipEl.style.top = Math.round(headY - 100) + "px";
+    this.sessionTooltipEl.style.top = Math.round(headY - 112) + "px";
   }
 
   _renderFloatingUI(frame) {

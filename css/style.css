@@ -73,6 +73,7 @@ html, body {
 
 /* ---------- Windows layer ---------- */
 #windows-layer { position: absolute; inset: 0; z-index: 10; }
+#decor-layer { position: absolute; inset: 0; z-index: 21; pointer-events: none; }
 
 .app-window {
   position: absolute;
@@ -226,8 +227,12 @@ html, body {
   font-size: 11px;
   font-weight: 700;
   font-variant-numeric: tabular-nums;
-  color: #fff;
-  background: rgba(30,30,34,0.88);
+  color: #333;
+  background: rgba(252,252,253,0.72);
+  backdrop-filter: blur(14px) saturate(1.6);
+  -webkit-backdrop-filter: blur(14px) saturate(1.6);
+  border: 1px solid rgba(255,255,255,0.5);
+  box-shadow: 0 6px 18px rgba(0,0,0,0.18);
   padding: 5px 10px;
   border-radius: 8px;
   white-space: nowrap;
@@ -775,13 +780,41 @@ html, body {
 .decor-item.locked { opacity: 0.5; cursor: default; }
 .decor-item.placed { border-color: #ff9d6c; background: rgba(255,157,108,0.14); }
 
-/* Placed decor sits fixed on the desktop itself, behind the cats/windows. */
+/* Placed decor sits on the desktop itself, behind the cats/windows — until
+   double-clicked, which lifts it into "move" mode for repositioning. */
 .decor-placed {
   position: absolute;
   font-size: 30px;
   filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2));
-  pointer-events: none;
+  pointer-events: auto;
+  cursor: pointer;
   z-index: 2;
+  touch-action: none;
+}
+.decor-placed.moving {
+  cursor: grabbing;
+  z-index: 1200;
+  filter: drop-shadow(0 3px 3px rgba(0,0,0,0.2)) drop-shadow(0 0 0 3px rgba(255,157,108,0.9));
+  outline: 2px dashed rgba(255,157,108,0.9);
+  outline-offset: 6px;
+  border-radius: 8px;
+}
+
+.decor-confirm-btn {
+  position: absolute;
+  transform: translate(-50%, 0);
+  z-index: 1200;
+  pointer-events: auto;
+  border: none;
+  background: #34c759;
+  color: #fff;
+  font-size: 11.5px;
+  font-weight: 700;
+  padding: 7px 12px;
+  border-radius: 999px;
+  cursor: pointer;
+  box-shadow: 0 6px 16px rgba(0,0,0,0.3);
+  white-space: nowrap;
 }
 
 .debug-box {

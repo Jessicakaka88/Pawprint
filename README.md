@@ -64,10 +64,11 @@ Opening `index.html` directly via `file://` also works.
   reaches a paw down over the edge at whatever's on screen (the same 🐾
   swipe as the pounce-bat), every few seconds.
 - **Check your study session at a glance.** While a study or break session
-  is running (see below), hover over any cat to see a small live timer
-  float above it — time elapsed for a count-up session, or time left for a
-  count-down one. It's a status readout, not a per-cat thing: every cat
-  shows the same session.
+  is running (see below), a small frosted-glass label floats above every
+  cat's head the whole time — no hovering needed — showing time elapsed for
+  a count-up session, or time left for a count-down one. It's a shared
+  status readout, not a per-cat thing: every active cat shows the same
+  session.
 - **Hover over a cat** — five buttons "zoom out" above its head in two
   curved rows (closet/toybox/food along a shallow arc on the bottom —
   toybox lifted higher in the middle — pause/clipboard centered on a row
@@ -111,7 +112,11 @@ Opening `index.html` directly via `file://` also works.
     reward loop without actually sitting through real study time.
   - **Decor** — home decor pieces you've unlocked with study points; tap one
     to place it on (or take it off) the desktop. Unlike closet items, decor
-    isn't per-cat — it's a shared piece of the desktop itself.
+    isn't per-cat — it's a shared piece of the desktop itself. A placed
+    piece starts at a sensible default spot, but **double-click it on the
+    desktop** to pick it up — it gets a dashed outline and a floating **✓
+    Place here** button — drag it anywhere, then tap the button to drop it
+    there for good. Double-click it again any time to move it once more.
   - **Settings** — hide all cats, pause movement & interactions globally,
     toggle paw prints, and switch **Playful mode** on: every
     so often while a cat is out walking, it grabs one of its unlocked toys
@@ -134,16 +139,17 @@ The Study tab is where you actually earn points:
    (an open-ended stopwatch you stop yourself) or **⏳ Count down** (pick a
    duration — 10/25/50/90 min for study, 5/10/15 min for break — and it
    finishes on its own).
-2. Tap **Start**. The timer runs live in the panel, and hovering any cat on
-   the desktop shows the same timer floating above its head.
+2. Tap **Start**. The timer runs live in the panel, and the same timer
+   floats above every cat's head on the desktop the whole time.
 3. Tap **End session** (or let a count-down session run out) to log it.
 
 ## How studying earns points
 
-- **1 point per full 10 minutes** of a logged study session.
-- **1 point per full 5 minutes** of a logged break session.
-- Only whole units count — a 24-minute study session logs 2 points, not
-  2.4; ending a session under one full unit (e.g. an 8-minute study
+- **1 point per full 30 minutes** of a logged study session.
+- **0.5 points per full 5 minutes** of a logged break session.
+- Only whole units count — a 65-minute study session logs 2 points, not
+  ~2.2; a 12-minute break logs 1 point (two full 5-minute blocks × 0.5),
+  not 1.2. Ending a session under one full unit (e.g. a 15-minute study
   session) still gets logged, just for 0 points.
 - Only one session can run at a time; ending it (manually, or automatically
   for a count-down session) is what turns it into points and a study-log
@@ -208,10 +214,11 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   literal eye/pupil tracking or crouch/pounce sprite art exists, so this is
   a flat-sprite approximation built from the existing sit pose, speed
   override, and particle effects rather than new animation frames. The live
-  session hover tooltip (`_renderSessionTooltip`) reads the shared
-  `StreakManager` session directly against the wall clock (`Date.now()`) on
-  every render, so it stays live even while hovering freezes the cat's own
-  pose — no separate ticking needed for it.
+  session label (`_renderSessionTooltip`) reads the shared `StreakManager`
+  session directly against the wall clock (`Date.now()`) on every render —
+  always shown while a session is active, never gated on hovering — so it
+  stays live even while hovering (for the hover menu) freezes the cat's own
+  pose.
 - `js/streak.js` (object name `StreakManager`, kept from before this
   feature's point-based rewrite) — owns study points, the session engine
   (`startSession`/`endSession`/`tickSession`, one session at a time, global
@@ -226,11 +233,20 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   (session controls, live timer, points, milestone list, session log), the
   Decor tab (place/un-place unlocked decor), and Settings.
 - `js/main.js` — app bootstrap; also renders whichever decor pieces are
-  "placed" onto `#decor-layer` at their fixed desktop spots (`DECOR` in
-  `js/catdata.js`), refreshed whenever an unlock or a placement toggle
-  could have changed what should be showing.
+  "placed" onto `#decor-layer`, each at its custom dragged spot
+  (`StreakManager`'s `decorPositions`) if it has one, else its default
+  catalog position (`DECOR` in `js/catdata.js`), refreshed whenever an
+  unlock or a placement toggle could have changed what should be showing.
+  Double-clicking a placed piece enters "move" mode (dashed outline, a
+  floating confirm button that follows it) and a plain pointerdown/move/up
+  drag — much simpler than the cats' own drag, since decor doesn't need
+  inertia or a pendulum swing — repositions it live; tapping the confirm
+  button reads its final `getBoundingClientRect()` and saves that as its
+  new `left`/`top`, ending move mode. `#decor-layer` sits above
+  `#windows-layer` in z-index so a piece placed away from an actual window
+  is still clickable through that layer's otherwise-invisible full-screen
+  hit box.
 
 Not implemented (out of scope for a prototype): a real macOS menu-bar
-background app, multi-monitor awareness, native window transparency,
-dragging decor to a custom spot (each piece has one fixed position), and
+background app, multi-monitor awareness, native window transparency, and
 actual purchase/earning mechanics beyond the study-point-based unlocks.

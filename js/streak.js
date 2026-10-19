@@ -30,7 +30,11 @@ const StreakManager = (() => {
       placedDecor: [],         // unlocked decor ids currently shown on the desktop
       decorPositions: {},      // decorId -> {left,top} once dragged to a custom spot (else DECOR[id].pos)
       equipped: {},             // catId -> [accessoryId,...]
-      settings: { hidden: false, paused: false, trails: true, playful: false },
+      settings: {
+        hidden: false, paused: false, trails: true, playful: false,
+        walkSpeed: 1,            // multiplier on the base walk/pounce speed
+        catSize: 1,              // multiplier on the rendered sprite size
+      },
       seenMilestones: [],
     };
   }

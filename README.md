@@ -102,14 +102,16 @@ Opening `index.html` directly via `file://` also works.
     brings the menu right back since the cursor's still on the cat.
 - **Open the full control panel** — now a normal floating, draggable app
   window (traffic-light title bar, centered on first open, remembers where
-  you last dragged it) via the dock's paw icon:
+  you last dragged it) via the dock's paw icon. **Study** is the leftmost
+  tab and opens by default — it's the actual point of the app — followed by
+  Cats, Decor, and Settings:
+  - **Study** — start a study or break session (see **Start a study
+    session** below), see your total study points, the full unlock
+    timeline, your recent session log, and **prototype demo tools** to add
+    points directly so you can preview the reward loop without actually
+    sitting through real study time.
   - **Cats** — show/hide unlocked cats on the desktop; locked ones show how
     many study points unlock them.
-  - **Study** — this is the actual point of the app. Start a study or break
-    session (see **Start a study session** below), see your total study
-    points, the full unlock timeline, your recent session log, and
-    **prototype demo tools** to add points directly so you can preview the
-    reward loop without actually sitting through real study time.
   - **Decor** — home decor pieces you've unlocked with study points; tap one
     to place it on (or take it off) the desktop. Unlike closet items, decor
     isn't per-cat — it's a shared piece of the desktop itself. A placed
@@ -118,15 +120,18 @@ Opening `index.html` directly via `file://` also works.
     Place here** button — drag it anywhere, then tap the button to drop it
     there for good. Double-click it again any time to move it once more.
   - **Settings** — hide all cats, pause movement & interactions globally,
-    toggle paw prints, and switch **Playful mode** on: every
-    so often while a cat is out walking, it grabs one of its unlocked toys
-    and carries it around in its mouth, playing with it for 10–20 seconds,
-    then leaves it behind wherever it ends up — never just teleported to a
-    random spot — and a fed cat's poop can land anywhere on the desktop.
-    **Serious mode** (the default) keeps cats just walking around without
-    picking up toys on their own; feeding still works the same, but its
-    poop always lands in the same out-of-the-way spot in the bottom-left
-    corner instead of scattering around.
+    toggle paw prints, switch **Playful mode** on (every so often while a
+    cat is out walking, it grabs one of its unlocked toys and carries it
+    around in its mouth, playing with it for 10–20 seconds, then leaves it
+    behind wherever it ends up — never just teleported to a random spot —
+    and a fed cat's poop can land anywhere on the desktop; **Serious mode**,
+    the default, keeps cats just walking around without picking up toys on
+    their own, and a fed cat's poop always lands in the same out-of-the-way
+    spot in the bottom-left corner instead), and two sliders: **Roaming
+    speed** (0.5×–2.5×, how fast cats walk/pounce around) and **Cat size**
+    (0.6×–1.8×, scales a cat and everything that floats around it — hover
+    menu, particles, held toys/food — together, staying planted on the same
+    ground line at any size).
 - **Drag the fake windows** by their title bars — cats treat them as real
   surfaces to perch on, and always render above them, like a real desk-pet
   overlay would.
@@ -218,7 +223,18 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
   session directly against the wall clock (`Date.now()`) on every render —
   always shown while a session is active, never gated on hovering — so it
   stays live even while hovering (for the hover menu) freezes the cat's own
-  pose.
+  pose. The Settings tab's **Cat size** slider scales a cat visually via a
+  single CSS `transform: scale()` on its container element, anchored at
+  `50% 100%` (the feet) so it grows/shrinks from the ground line it's
+  standing on rather than drifting — the underlying frame box model
+  (`_currentFrame`) and accessory anchors stay untouched, since fractional
+  anchors scale for free under a uniform parent transform. Anything
+  positioned using an *absolute* height/width off the cat (the hover
+  menu's anchor point, particles, the drag grip point, the held-toy/food
+  position, the screen-edge clamp) multiplies by the same scale
+  (`_sizeScale()`) so it stays visually attached at any size. The
+  **Roaming speed** slider is a plain multiplier on the walk/pounce px/sec
+  constant.
 - `js/streak.js` (object name `StreakManager`, kept from before this
   feature's point-based rewrite) — owns study points, the session engine
   (`startSession`/`endSession`/`tickSession`, one session at a time, global

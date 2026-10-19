@@ -144,6 +144,15 @@ class Cat {
     return window.innerHeight - 92;
   }
 
+  // Settings-driven size multiplier. The sprite's own box model (frame
+  // w/h) stays unscaled — see _render()'s CSS transform — but anything
+  // positioned relative to the cat using a *visual* height/width (hover
+  // UI, particles, the drag grip point, the edge clamp) needs to multiply
+  // by this to stay aligned with the actual rendered size.
+  _sizeScale() {
+    return this.world.getSettings().catSize || 1;
+  }
+
   _buildDom() {
     const el = document.createElement("div");
     el.className = "cat";
@@ -180,9 +189,10 @@ class Cat {
         movedFar = true;
         this._startDrag();
         // Hold the cat by the scruff: the cursor sits on the back of its head.
+        const scale = this._sizeScale();
         const { w, h } = SPRITEART.dangleSize();
-        pointerOffsetX = w * (SPRITEART.DANGLE_SCRUFF.x - 0.5);
-        pointerOffsetY = h * SPRITEART.DANGLE_SCRUFF.y - h;
+        pointerOffsetX = w * scale * (SPRITEART.DANGLE_SCRUFF.x - 0.5);
+        pointerOffsetY = h * scale * SPRITEART.DANGLE_SCRUFF.y - h * scale;
       }
       if (movedFar) {
         const prevX = this.x, prevY = this.footY;
@@ -917,7 +927,7 @@ class Cat {
       this.footY = this.groundFootY();
     }
 
-    const { w } = SPRITEART.sitSize();
+    const w = SPRITEART.sitSize().w * this._sizeScale();
     this.x = Math.max(w / 2, Math.min(window.innerWidth - w / 2, this.x));
   }
 
@@ -943,7 +953,8 @@ class Cat {
   }
 
   _spawnHearts() {
-    const { w, h } = SPRITEART.sitSize();
+    const scale = this._sizeScale();
+    const w = SPRITEART.sitSize().w * scale, h = SPRITEART.sitSize().h * scale;
     const count = 3;
     for (let i = 0; i < count; i++) {
       const el = document.createElement("div");
@@ -992,7 +1003,8 @@ class Cat {
   }
 
   _spawnZzzParticle() {
-    const { w, h } = SPRITEART.lieSize();
+    const scale = this._sizeScale();
+    const w = SPRITEART.lieSize().w * scale, h = SPRITEART.lieSize().h * scale;
     // The back ear (away from the snout), not the front one closest to it.
     const headX = this.x + (this.facing === 1 ? w * 0.14 : -w * 0.14);
     const headY = this.footY - h * 0.92;
@@ -1007,7 +1019,7 @@ class Cat {
 
   // A quick "👀 I see you" blip above the head the instant a hunt begins.
   _spawnNoticeParticle() {
-    const { h } = SPRITEART.sitSize();
+    const h = SPRITEART.sitSize().h * this._sizeScale();
     const el = document.createElement("div");
     el.className = "notice-particle";
     el.textContent = "👀";
@@ -1020,7 +1032,8 @@ class Cat {
   // A paw swipe near the cat's front — used both for batting at the
   // cursor mid-hunt and for an idle paw-reach while perched on a window.
   _spawnPawSwipe() {
-    const { w, h } = SPRITEART.sitSize();
+    const scale = this._sizeScale();
+    const w = SPRITEART.sitSize().w * scale, h = SPRITEART.sitSize().h * scale;
     const swipeX = this.x + (this.facing === 1 ? w * 0.32 : -w * 0.32);
     const el = document.createElement("div");
     el.className = "paw-swipe-particle";
@@ -1251,7 +1264,7 @@ class Cat {
         } else {
           step.turning = false;
           this.state = "walk";
-          const speed = step.type === "pounce" ? 190 : 52; // px/sec
+          const speed = (step.type === "pounce" ? 190 : 52) * (settings.walkSpeed || 1); // px/sec
           const move = Math.min(dist, speed * (dt / 1000));
           this.x += (dxw / dist) * move;
           this.footY += (dyw / dist) * move;
@@ -1378,6 +1391,14 @@ class Cat {
     this.el.style.width = frame.w + "px";
     this.el.style.height = frame.h + "px";
 
+    // Settings-driven size slider: scale the whole sprite+accessories+name
+    // tag as one visual unit, anchored at the feet (bottom-center of this
+    // box sits at (this.x, this.footY)) so the cat still stands on the
+    // same ground line at any size — the underlying layout math above
+    // stays untouched, it's purely a visual scale on top of it.
+    this.el.style.transform = `scale(${this._sizeScale()})`;
+    this.el.style.transformOrigin = "50% 100%";
+
     if (this.dragging) {
       // Yanked upward, the dangling body stretches down a little.
       const stretch = 1 + Math.min(0.08, Math.max(0, -this.dragVY) / 150);
@@ -1418,9 +1439,12 @@ class Cat {
   }
 
   _renderFloatingUI(frame) {
+    const scale = this._sizeScale();
+    const bodyW = frame.w * scale;
+
     // Anchor the hover menu at a stable point near the head, regardless of
     // which pose/frame is currently showing, so it doesn't jitter.
-    const headY = this.footY - SPRITEART.sitSize().h * 0.78;
+    const headY = this.footY - SPRITEART.sitSize().h * scale * 0.78;
     this.hoverMenuEl.style.left = Math.round(this.x) + "px";
     this.hoverMenuEl.style.top = Math.round(headY) + "px";
 
@@ -1432,9 +1456,9 @@ class Cat {
     else this.hoverClipBtn.removeAttribute("data-count");
 
     const panelWidth = 210;
-    let panelLeft = this.x + frame.w / 2 + 14;
-    if (panelLeft + panelWidth > window.innerWidth - 10) panelLeft = this.x - frame.w / 2 - 14 - panelWidth;
-    const panelTop = Math.max(34, this.footY - SPRITEART.sitSize().h - 10);
+    let panelLeft = this.x + bodyW / 2 + 14;
+    if (panelLeft + panelWidth > window.innerWidth - 10) panelLeft = this.x - bodyW / 2 - 14 - panelWidth;
+    const panelTop = Math.max(34, this.footY - SPRITEART.sitSize().h * scale - 10);
     this.clipboardPanelEl.style.left = Math.round(panelLeft) + "px";
     this.clipboardPanelEl.style.top = Math.round(panelTop) + "px";
 
@@ -1466,22 +1490,23 @@ class Cat {
 
     // The active toy sits on the ground right beside the cat while it plays.
     if (this.activeToyEl) {
-      const toyX = this.x + (this.facing === 1 ? -frame.w * 0.45 : frame.w * 0.45);
+      const toyX = this.x + (this.facing === 1 ? -bodyW * 0.45 : bodyW * 0.45);
       this.activeToyEl.style.left = Math.round(toyX - 11) + "px";
       this.activeToyEl.style.top = Math.round(this.footY - 24) + "px";
     }
 
     // A carried toy rides along near its mouth as it wanders around with it.
     if (this.carryToyEl) {
-      const mouthX = this.x + (this.facing === 1 ? SPRITEART.sitSize().w * 0.3 : -SPRITEART.sitSize().w * 0.3);
+      const sitW = SPRITEART.sitSize().w * scale, sitH = SPRITEART.sitSize().h * scale;
+      const mouthX = this.x + (this.facing === 1 ? sitW * 0.3 : -sitW * 0.3);
       this.carryToyEl.style.left = Math.round(mouthX - 11) + "px";
-      this.carryToyEl.style.top = Math.round(this.footY - SPRITEART.sitSize().h * 0.7) + "px";
+      this.carryToyEl.style.top = Math.round(this.footY - sitH * 0.7) + "px";
     }
 
     // The food bowl sits on the ground in front of the cat's face while it
     // eats, not tucked behind it near the tail.
     if (this.eatingEl) {
-      const bowlX = this.x + (this.facing === 1 ? frame.w * 0.5 : -frame.w * 0.5);
+      const bowlX = this.x + (this.facing === 1 ? bodyW * 0.5 : -bodyW * 0.5);
       this.eatingEl.style.left = Math.round(bowlX - 11) + "px";
       this.eatingEl.style.top = Math.round(this.footY - 24) + "px";
     }

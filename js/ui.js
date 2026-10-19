@@ -306,6 +306,12 @@ const UI = (() => {
     document.getElementById("mode-description").textContent = s.playful
       ? "Playful mode — cats leave toys and little messes behind as they wander. Click one to pick it up."
       : "Serious mode — cats just walk around. Switch on for cats that leave toys and little messes behind to pick up.";
+    const walkSpeed = s.walkSpeed || 1;
+    const catSize = s.catSize || 1;
+    document.getElementById("slider-walk-speed").value = walkSpeed;
+    document.getElementById("walk-speed-value").textContent = walkSpeed.toFixed(1) + "×";
+    document.getElementById("slider-cat-size").value = catSize;
+    document.getElementById("cat-size-value").textContent = catSize.toFixed(1) + "×";
   }
 
   function renderAll() {
@@ -328,6 +334,16 @@ const UI = (() => {
     document.getElementById("toggle-playful").addEventListener("change", (e) => {
       StreakManager.setSetting("playful", e.target.checked);
       renderSettings();
+    });
+    document.getElementById("slider-walk-speed").addEventListener("input", (e) => {
+      const value = Number(e.target.value);
+      StreakManager.setSetting("walkSpeed", value);
+      document.getElementById("walk-speed-value").textContent = value.toFixed(1) + "×";
+    });
+    document.getElementById("slider-cat-size").addEventListener("input", (e) => {
+      const value = Number(e.target.value);
+      StreakManager.setSetting("catSize", value);
+      document.getElementById("cat-size-value").textContent = value.toFixed(1) + "×";
     });
   }
 

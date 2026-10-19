@@ -1412,10 +1412,10 @@ class Cat {
     this._renderFloatingUI(frame);
   }
 
-  // Live "how long left / how long studying" label, positioned above the
-  // always floating above the head — not hover-gated — for as long as a
-  // study/break session is actually running; hidden entirely otherwise.
-  _renderSessionTooltip(headY) {
+  // Live "how long left / how long studying" label, floating below the
+  // cat's feet — not hover-gated — for as long as a study/break session is
+  // actually running; hidden entirely otherwise.
+  _renderSessionTooltip() {
     const session = StreakManager.get().activeSession;
     if (!session) {
       this.sessionTooltipEl.classList.remove("show");
@@ -1435,7 +1435,7 @@ class Cat {
     }
     this.sessionTooltipEl.textContent = text;
     this.sessionTooltipEl.style.left = Math.round(this.x) + "px";
-    this.sessionTooltipEl.style.top = Math.round(headY - 112) + "px";
+    this.sessionTooltipEl.style.top = Math.round(this.footY + 10) + "px";
   }
 
   _renderFloatingUI(frame) {
@@ -1448,7 +1448,7 @@ class Cat {
     this.hoverMenuEl.style.left = Math.round(this.x) + "px";
     this.hoverMenuEl.style.top = Math.round(headY) + "px";
 
-    this._renderSessionTooltip(headY);
+    this._renderSessionTooltip();
 
     const clipCount = this.clipboard.length;
     this.hoverClipBtn.classList.toggle("has-items", clipCount > 0);

@@ -64,8 +64,8 @@ Opening `index.html` directly via `file://` also works.
   reaches a paw down over the edge at whatever's on screen (the same 🐾
   swipe as the pounce-bat), every few seconds.
 - **Check your study session at a glance.** While a study or break session
-  is running (see below), a small frosted-glass label floats above every
-  cat's head the whole time — no hovering needed — showing time elapsed for
+  is running (see below), a small frosted-glass label floats below every
+  cat's feet the whole time — no hovering needed — showing time elapsed for
   a count-up session, or time left for a count-down one. It's a shared
   status readout, not a per-cat thing: every active cat shows the same
   session.
@@ -145,7 +145,7 @@ The Study tab is where you actually earn points:
    duration — 10/25/50/90 min for study, 5/10/15 min for break — and it
    finishes on its own).
 2. Tap **Start**. The timer runs live in the panel, and the same timer
-   floats above every cat's head on the desktop the whole time.
+   floats below every cat's feet on the desktop the whole time.
 3. Tap **End session** (or let a count-down session run out) to log it.
 
 ## How studying earns points

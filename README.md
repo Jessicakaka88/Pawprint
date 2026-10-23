@@ -59,7 +59,10 @@ Opening `index.html` directly via `file://` also works.
   your cursor's motion, and snaps onto whichever window is nearest when you
   let go (no need for a precise drop), or the floor if nothing's close by.
 - **Paw prints.** While walking, the cat leaves a trail of paw prints,
-  rotated to point the way it's heading, that fade out after a few seconds.
+  rotated to point the way it's heading, that fade out after a few seconds —
+  kept narrow and nearly single-file rather than a wide zigzag, since real
+  cats are "direct registers": the hind paw lands almost exactly where the
+  front paw on the same side just lifted off.
 - **Window-perching.** While settled on top of a window, a cat occasionally
   reaches a paw down over the edge at whatever's on screen (the same 🐾
   swipe as the pounce-bat), every few seconds.
@@ -181,7 +184,11 @@ Vanilla HTML/CSS/JS, no dependencies or build step:
 - `js/cat.js` — a `Cat`'s behavior: wander/perch/rest state machine, pointer
   handling (tap-to-pat vs. drag, with a movement/time threshold to tell
   them apart), frame selection (walk-cycle animation, sit, lie down, patted,
-  a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping,
+  a pendulum-swinging scruff-dangle for "dragged"), paw-print stamping (a
+  tight ±4px-ish side-to-side offset rather than a wide zigzag, reflecting
+  real cats' narrow "direct register" trackway — the walk-cycle sprite
+  itself is 4 fixed hand-drawn frames per direction, not a leg-rigged
+  skeleton, so the gait isn't separately leg-animated beyond that),
   particles, the per-cat
   hover menu (pause/clipboard/closet/toybox/food, arranged in two curved
   rows via a `--dx`/`--dy` CSS custom property per button), the HTML5

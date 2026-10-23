@@ -1327,6 +1327,14 @@ class Cat {
     this._render(now);
   }
 
+  // Real cats are "direct registers": the hind paw lands almost exactly
+  // where the front paw on the same side just lifted off, so a walking
+  // cat leaves a narrow, nearly single-file line of prints instead of a
+  // wide, splayed trackway — unlike most other quadrupeds, whose hind
+  // print falls well short of (and off to the side of) the front one. The
+  // trail here stands in for that overlaid front+hind mark, so the
+  // left/right offset and jitter are kept small and tight rather than a
+  // wide zigzag.
   _maybeStampPaw(settings) {
     if (!settings.trails) return;
     if (Math.abs(this.footY - this.groundFootY()) > 4) return; // only on the floor
@@ -1335,8 +1343,8 @@ class Cat {
     this.pawSide *= -1;
     const print = document.createElement("div");
     print.className = "paw-print";
-    const footX = this.x + this.pawSide * 7 + (Math.random() * 4 - 2);
-    const footY = this.footY - 4 + (Math.random() * 4 - 2);
+    const footX = this.x + this.pawSide * 4 + (Math.random() * 2 - 1);
+    const footY = this.footY - 4 + (Math.random() * 2 - 1);
     print.style.left = (footX - 11) + "px";
     print.style.top = (footY - 11) + "px";
     // The toes point "up" in the source art — rotate so they point toward

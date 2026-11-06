@@ -41,7 +41,11 @@ const StreakManager = (() => {
 
   function load() {
     try {
-      const raw = localStorage.getItem(STORAGE_KEY);
+      // The Mac app hands over the progress it saved to disk (see js/native.js);
+      // the browser prototype uses localStorage.
+      const raw = typeof window.PAWPRINT_SAVED_STATE === "string"
+        ? window.PAWPRINT_SAVED_STATE
+        : localStorage.getItem(STORAGE_KEY);
       state = raw ? Object.assign(defaultState(), JSON.parse(raw)) : defaultState();
       state.settings = Object.assign(defaultState().settings, state.settings || {});
     } catch (e) {
@@ -50,7 +54,11 @@ const StreakManager = (() => {
   }
 
   function save() {
-    try { localStorage.setItem(STORAGE_KEY, JSON.stringify(state)); } catch (e) { /* ignore */ }
+    const json = JSON.stringify(state);
+    try { localStorage.setItem(STORAGE_KEY, json); } catch (e) { /* ignore */ }
+    try {
+      if (window.PAWPRINT_NATIVE) window.webkit.messageHandlers.pawprint.postMessage({ type: "save", state: json });
+    } catch (e) { /* ignore */ }
   }
 
   function get() { return state; }

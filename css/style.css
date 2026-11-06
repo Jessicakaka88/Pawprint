@@ -893,3 +893,14 @@ html, body {
   #panel { width: 88%; }
   .desktop-icons { display: none; }
 }
+
+/* ---------- Native Mac app (desk-pet overlay, see js/native.js) ----------
+   The page sits in a see-through window over the real desktop, so the fake
+   wallpaper, menu bar, desktop icons and dock are dropped. Real windows get
+   invisible stand-ins that cats can perch on. */
+html.native, html.native body, html.native #desktop { background: transparent; }
+html.native #menubar,
+html.native .desktop-icons,
+html.native #dock { display: none; }
+html.native #toast-stack { top: 14px; }
+.native-window-proxy { position: absolute; visibility: hidden; pointer-events: none; }

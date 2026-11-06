@@ -102,9 +102,44 @@ const WindowManager = (() => {
   }
 
   function init() {
+    // In the native Mac app the cats live on your real desktop, so there are
+    // no fake windows — real ones arrive through syncNative() instead.
+    if (window.PAWPRINT_NATIVE) return;
     create("finder");
     create("notes");
   }
 
-  return { create, show, visibleRects, init };
+  /*
+   * Native desktop-pet mode (see js/native.js): the Mac app reports the real
+   * on-screen windows, and each one gets an invisible stand-in element here
+   * so the cats' existing perch logic (which reads offsetLeft/offsetTop and
+   * drops off when the element disappears) works on real windows unchanged.
+   * list: [{id, x, y, w, h}] in page coordinates.
+   */
+  function syncNative(list) {
+    const seen = new Set();
+    list.forEach((w) => {
+      const key = "native-" + w.id;
+      seen.add(key);
+      let el = registry[key];
+      if (!el) {
+        el = document.createElement("div");
+        el.className = "native-window-proxy";
+        layer().appendChild(el);
+        registry[key] = el;
+      }
+      el.style.left = Math.round(w.x) + "px";
+      el.style.top = Math.round(w.y) + "px";
+      el.style.width = Math.round(w.w) + "px";
+      el.style.height = Math.round(w.h) + "px";
+    });
+    Object.keys(registry).forEach((key) => {
+      if (key.startsWith("native-") && !seen.has(key)) {
+        registry[key].remove();
+        delete registry[key];
+      }
+    });
+  }
+
+  return { create, show, visibleRects, init, syncNative };
 })();

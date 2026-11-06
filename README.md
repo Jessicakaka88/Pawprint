@@ -22,6 +22,41 @@ python3 -m http.server 8080
 then open `http://localhost:8080/` in a browser (Chrome/Safari recommended).
 Opening `index.html` directly via `file://` also works.
 
+## Running it as a real Mac app (Xcode)
+
+`macos/Pawprint.xcodeproj` turns the same cats into a real desktop pet: they
+walk along the bottom of your actual screen (just above the Dock), climb up
+and sit on top of your real app windows, and stay above everything — while
+clicks anywhere *except* on a cat pass straight through to whatever is
+underneath. There's no Dock icon; Pawprint lives in the menu bar as a 🐾
+paw, whose menu opens the control panel (study timer, cats, decor,
+settings), hides or pauses the cats, and quits.
+
+1. On a Mac with Xcode 15 or newer (macOS 12+), open
+   `macos/Pawprint.xcodeproj`.
+2. Pick the **Pawprint** scheme and **My Mac**, then press **Run** (⌘R).
+3. Look for the paw in the menu bar. To stop it, choose **Quit Pawprint**
+   from that menu (or press Stop in Xcode).
+
+It's signed "to run locally," so no Apple developer account is needed.
+To keep a copy that runs without Xcode, use **Product → Archive** (or copy
+the built `Pawprint.app` out of **Product → Show Build Folder in Finder**)
+into your Applications folder.
+
+How it fits together: the app is a thin Swift shell
+(`macos/Pawprint/`) around the web prototype in this folder — the Xcode
+project bundles `index.html`, `css/`, `js/` and `assets/` directly, so
+changes to the cats show up the next time you build. It shows the page in
+a see-through, always-on-top window over the main display, tells the page
+the mouse position and where your real windows are, and catches clicks
+only over the parts the page reports as clickable. The page side of that
+is `js/native.js`, which does nothing in a normal browser. Progress is
+saved to `~/Library/Application Support/Pawprint/state.json`.
+
+Current limits: cats stay on the main display, can't receive files dragged
+onto them from Finder (drag-and-drop passes through to the desktop), and
+sit on top of a window even if another window is later moved over it.
+
 ## What to try
 
 - **Watch a cat live on the desktop.** It wanders the "desktop," occasionally

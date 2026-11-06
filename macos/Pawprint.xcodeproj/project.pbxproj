@@ -1,0 +1,267 @@
+// !$*UTF8*$!
+{
+	archiveVersion = 1;
+	classes = {
+	};
+	objectVersion = 56;
+	objects = {
+
+/* Begin PBXBuildFile section */
+		79F873BCCC4BB01D82A7ED9C /* PawprintApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4ECAC4C61F65F976BA47893E /* PawprintApp.swift */; };
+		B3118CFE6329118FEE2947A4 /* OverlayController.swift in Sources */ = {isa = PBXBuildFile; fileRef = ADBF54E383E03ED6CEAB207E /* OverlayController.swift */; };
+		F1F660EF1B7F4B9D44FB7367 /* index.html in Resources */ = {isa = PBXBuildFile; fileRef = 6C51CAB193F66752EE678BB8 /* index.html */; };
+		B121F9144C56CAF5C4566837 /* css in Resources */ = {isa = PBXBuildFile; fileRef = 37F72E7D6E20EA7A6FBADF0C /* css */; };
+		5EDFA1C1EF84AD21B96DB34C /* js in Resources */ = {isa = PBXBuildFile; fileRef = FDBC419C085B4D8AA8A146F0 /* js */; };
+		2E2643DD317AC44BFC47D7A0 /* assets in Resources */ = {isa = PBXBuildFile; fileRef = 377E6231352350A81C148235 /* assets */; };
+/* End PBXBuildFile section */
+
+/* Begin PBXFileReference section */
+		4ECAC4C61F65F976BA47893E /* PawprintApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PawprintApp.swift; sourceTree = "<group>"; };
+		ADBF54E383E03ED6CEAB207E /* OverlayController.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OverlayController.swift; sourceTree = "<group>"; };
+		6C51CAB193F66752EE678BB8 /* index.html */ = {isa = PBXFileReference; lastKnownFileType = text.html; name = index.html; path = ../index.html; sourceTree = SOURCE_ROOT; };
+		37F72E7D6E20EA7A6FBADF0C /* css */ = {isa = PBXFileReference; lastKnownFileType = folder; name = css; path = ../css; sourceTree = SOURCE_ROOT; };
+		FDBC419C085B4D8AA8A146F0 /* js */ = {isa = PBXFileReference; lastKnownFileType = folder; name = js; path = ../js; sourceTree = SOURCE_ROOT; };
+		377E6231352350A81C148235 /* assets */ = {isa = PBXFileReference; lastKnownFileType = folder; name = assets; path = ../assets; sourceTree = SOURCE_ROOT; };
+		5C6A928D7C66A2CC425D9DBD /* Pawprint.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Pawprint.app; sourceTree = BUILT_PRODUCTS_DIR; };
+/* End PBXFileReference section */
+
+/* Begin PBXFrameworksBuildPhase section */
+		09A82846EB709A06A7813A7E /* Frameworks */ = {
+			isa = PBXFrameworksBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXFrameworksBuildPhase section */
+
+/* Begin PBXGroup section */
+		2B731CEFC6751AAE0EC69B98 = {
+			isa = PBXGroup;
+			children = (
+				56A1B566039BA486F2D6DC66 /* Pawprint */,
+				7936D631CDF8F259BEA787F5 /* Web (cats, from the repo root) */,
+				CC0F68FE2D81F9614883F277 /* Products */,
+			);
+			sourceTree = "<group>";
+		};
+		56A1B566039BA486F2D6DC66 /* Pawprint */ = {
+			isa = PBXGroup;
+			children = (
+				4ECAC4C61F65F976BA47893E /* PawprintApp.swift */,
+				ADBF54E383E03ED6CEAB207E /* OverlayController.swift */,
+			);
+			path = Pawprint;
+			sourceTree = "<group>";
+		};
+		7936D631CDF8F259BEA787F5 /* Web (cats, from the repo root) */ = {
+			isa = PBXGroup;
+			children = (
+				6C51CAB193F66752EE678BB8 /* index.html */,
+				37F72E7D6E20EA7A6FBADF0C /* css */,
+				FDBC419C085B4D8AA8A146F0 /* js */,
+				377E6231352350A81C148235 /* assets */,
+			);
+			name = "Web (cats, from the repo root)";
+			sourceTree = "<group>";
+		};
+		CC0F68FE2D81F9614883F277 /* Products */ = {
+			isa = PBXGroup;
+			children = (
+				5C6A928D7C66A2CC425D9DBD /* Pawprint.app */,
+			);
+			name = Products;
+			sourceTree = "<group>";
+		};
+/* End PBXGroup section */
+
+/* Begin PBXNativeTarget section */
+		42AEFBAE01D2DFD981F7DA7D /* Pawprint */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 545A77A37390D93094F00C58 /* Build configuration list for PBXNativeTarget "Pawprint" */;
+			buildPhases = (
+				838248CAA0E23712048A3C4E /* Sources */,
+				09A82846EB709A06A7813A7E /* Frameworks */,
+				B38B8EFCFFAEB0E290034F10 /* Resources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+			);
+			name = Pawprint;
+			productName = Pawprint;
+			productReference = 5C6A928D7C66A2CC425D9DBD /* Pawprint.app */;
+			productType = "com.apple.product-type.application";
+		};
+/* End PBXNativeTarget section */
+
+/* Begin PBXProject section */
+		46F86FAA6BBF9AC94A7E4595 /* Project object */ = {
+			isa = PBXProject;
+			attributes = {
+				BuildIndependentTargetsInParallel = 1;
+				LastSwiftUpdateCheck = 1500;
+				LastUpgradeCheck = 1500;
+				TargetAttributes = {
+					42AEFBAE01D2DFD981F7DA7D = {
+						CreatedOnToolsVersion = 15.0;
+					};
+				};
+			};
+			buildConfigurationList = 3B886D25E9209DFCE86603D7 /* Build configuration list for PBXProject "Pawprint" */;
+			compatibilityVersion = "Xcode 14.0";
+			developmentRegion = en;
+			hasScannedForEncodings = 0;
+			knownRegions = (
+				en,
+				Base,
+			);
+			mainGroup = 2B731CEFC6751AAE0EC69B98;
+			productRefGroup = CC0F68FE2D81F9614883F277 /* Products */;
+			projectDirPath = "";
+			projectRoot = "";
+			targets = (
+				42AEFBAE01D2DFD981F7DA7D /* Pawprint */,
+			);
+		};
+/* End PBXProject section */
+
+/* Begin PBXResourcesBuildPhase section */
+		B38B8EFCFFAEB0E290034F10 /* Resources */ = {
+			isa = PBXResourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				F1F660EF1B7F4B9D44FB7367 /* index.html in Resources */,
+				B121F9144C56CAF5C4566837 /* css in Resources */,
+				5EDFA1C1EF84AD21B96DB34C /* js in Resources */,
+				2E2643DD317AC44BFC47D7A0 /* assets in Resources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXResourcesBuildPhase section */
+
+/* Begin PBXSourcesBuildPhase section */
+		838248CAA0E23712048A3C4E /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				79F873BCCC4BB01D82A7ED9C /* PawprintApp.swift in Sources */,
+				B3118CFE6329118FEE2947A4 /* OverlayController.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
+/* End PBXSourcesBuildPhase section */
+
+/* Begin XCBuildConfiguration section */
+		F6143EE2941E474EB4BAD052 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = dwarf;
+				ENABLE_TESTABILITY = YES;
+				GCC_OPTIMIZATION_LEVEL = 0;
+				ONLY_ACTIVE_ARCH = YES;
+				SWIFT_ACTIVE_COMPILATION_CONDITIONS = DEBUG;
+				SWIFT_OPTIMIZATION_LEVEL = "-Onone";
+			};
+			name = Debug;
+		};
+		36CFC301A717EE35561E9C33 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				ALWAYS_SEARCH_USER_PATHS = NO;
+				CLANG_ENABLE_MODULES = YES;
+				CLANG_ENABLE_OBJC_ARC = YES;
+				ENABLE_STRICT_OBJC_MSGSEND = YES;
+				GCC_NO_COMMON_BLOCKS = YES;
+				MACOSX_DEPLOYMENT_TARGET = 12.0;
+				SDKROOT = macosx;
+				SWIFT_VERSION = 5.0;
+				DEBUG_INFORMATION_FORMAT = "dwarf-with-dsym";
+				SWIFT_COMPILATION_MODE = wholemodule;
+				SWIFT_OPTIMIZATION_LEVEL = "-O";
+			};
+			name = Release;
+		};
+		6A79C94DB2EB7C79AF3592F5 /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Pawprint;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.pawprint.desktoppet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Debug;
+		};
+		68AFC219BD8EB07814E31001 /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				CODE_SIGN_IDENTITY = "-";
+				CODE_SIGN_STYLE = Manual;
+				COMBINE_HIDPI_IMAGES = YES;
+				CURRENT_PROJECT_VERSION = 1;
+				DEVELOPMENT_TEAM = "";
+				ENABLE_HARDENED_RUNTIME = NO;
+				GENERATE_INFOPLIST_FILE = YES;
+				INFOPLIST_KEY_CFBundleDisplayName = Pawprint;
+				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
+				INFOPLIST_KEY_LSUIElement = YES;
+				INFOPLIST_KEY_NSHumanReadableCopyright = "";
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/../Frameworks",
+				);
+				MARKETING_VERSION = 1.0;
+				PRODUCT_BUNDLE_IDENTIFIER = app.pawprint.desktoppet;
+				PRODUCT_NAME = "$(TARGET_NAME)";
+				SWIFT_EMIT_LOC_STRINGS = NO;
+			};
+			name = Release;
+		};
+/* End XCBuildConfiguration section */
+
+/* Begin XCConfigurationList section */
+		3B886D25E9209DFCE86603D7 /* Build configuration list for PBXProject "Pawprint" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				F6143EE2941E474EB4BAD052 /* Debug */,
+				36CFC301A717EE35561E9C33 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+		545A77A37390D93094F00C58 /* Build configuration list for PBXNativeTarget "Pawprint" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				6A79C94DB2EB7C79AF3592F5 /* Debug */,
+				68AFC219BD8EB07814E31001 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Release;
+		};
+/* End XCConfigurationList section */
+	};
+	rootObject = 46F86FAA6BBF9AC94A7E4595 /* Project object */;
+}
